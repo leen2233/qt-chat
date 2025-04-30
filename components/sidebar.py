@@ -109,6 +109,7 @@ class SidebarItem(QtWidgets.QWidget):
         """Set this item as active/inactive"""
         self.is_active = active
         if active:
+            self.is_hovered = False
             self.update_background(self.active_color)
         else:
             if self.is_hovered:
@@ -156,7 +157,6 @@ class Sidebar(QtWidgets.QWidget):
         self.chat_selected.emit(item.name_label.text())
 
     def set_active_item(self, active_item):
-        print(active_item)
         if self.active_item:
             self.active_item.set_active(False)
 
