@@ -18,9 +18,9 @@ class SidebarItem(QtWidgets.QWidget):
         self.setAutoFillBackground(True)
 
         # Create color objects for different states
-        self.normal_color = QtGui.QColor("#252932")
+        self.normal_color = QtGui.QColor("#1f1e1d")
         self.hover_color = QtGui.QColor("#grey")
-        self.active_color = QtGui.QColor("#4a5a82")
+        self.active_color = QtGui.QColor("#262624")
 
         # Set initial palette
         self.update_background(self.normal_color)
@@ -60,6 +60,7 @@ class SidebarItem(QtWidgets.QWidget):
         self.time_label.setStyleSheet(
             "font-size: 12px; color: #888; background-color: transparent; border-color: transparent"
         )
+
         self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.time_label.setContentsMargins(10, 0, 10, 0)
 
@@ -99,6 +100,7 @@ class SidebarItem(QtWidgets.QWidget):
 
     def mousePressEvent(self, event):
         """Handle mouse press event"""
+        print("button cicked ", event)
         if event.button() == Qt.LeftButton:
             self.clicked.emit(self)  # Emit signal with self as argument
         super().mousePressEvent(event)
@@ -116,8 +118,11 @@ class SidebarItem(QtWidgets.QWidget):
 
 
 class Sidebar(QtWidgets.QWidget):
+    chat_selected = Signal(str)
+
     def __init__(self):
         super().__init__()
+        self.active_item = None
         self.setFixedWidth(250)
         self.setObjectName("Sidebar")
 
@@ -126,7 +131,7 @@ class Sidebar(QtWidgets.QWidget):
 
         # Create and set a palette for this widget
         palette = self.palette()
-        palette.setColor(QtGui.QPalette.Window, QtGui.QColor("#252932"))
+        palette.setColor(QtGui.QPalette.Window, QtGui.QColor("#1f1e1d"))
         self.setPalette(palette)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -137,5 +142,23 @@ class Sidebar(QtWidgets.QWidget):
         # Sidebar items
         self.sidebar_items = []
         for chat in CHAT_LIST:
-            self.sidebar_items.append(SidebarItem(chat["name"], chat["last_message"], chat["time"]))
+            item = SidebarItem(chat["name"], chat["last_message"], chat["time"])
+            item.clicked.connect(self.handle_item_click)
+            self.sidebar_items.append(item)
             self.layout.addWidget(self.sidebar_items[-1])
+
+        if self.sidebar_items:
+            # self.active_item()
+            self.set_active_item(self.sidebar_items[0])
+
+    def handle_item_click(self, item):
+        self.set_active_item(item)
+        self.chat_selected.emit(item.name_label.text())
+
+    def set_active_item(self, active_item):
+        print(active_item)
+        if self.active_item:
+            self.active_item.set_active(False)
+
+        active_item.set_active(True)
+        self.active_item = active_item

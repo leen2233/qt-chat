@@ -23,7 +23,7 @@ class ChatApp(QtWidgets.QMainWindow):
 
         # Dark theme stylesheet
         self.setStyleSheet("""
-            QMainWindow{ background-color: #2a2f3b; color: #ffffff; }
+            QMainWindow{ background-color: #262624; color: #ffffff; }
         """)
 
         # Sidebar (chat list)
