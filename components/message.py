@@ -1,5 +1,5 @@
 from PySide6 import QtGui, QtWidgets
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QPoint, QRect, Qt
 
 
 class Message(QtWidgets.QWidget):
@@ -20,10 +20,12 @@ class Message(QtWidgets.QWidget):
         self.message_box.setMaximumWidth(600)  # Maximum width for any message
 
         if is_mine:
-            self.message_box.setStyleSheet("background-color: #202324; border-radius: 10px; padding: 10px")
+            self.setStyleSheet(
+                "QWidget { background-color: #202324; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px}"
+            )
             self.main_layout.setAlignment(Qt.AlignRight)
         else:
-            self.message_box.setStyleSheet("background-color: #30302e; border-radius: 10px; padding: 10px")
+            self.message_box.setStyleSheet("background-color: #30302e; border-radius: 10px; padding: 10px;border-bottom-left-radius: 0px")
             self.main_layout.setAlignment(Qt.AlignLeft)
 
         self.message_layout = QtWidgets.QVBoxLayout(self.message_box)
@@ -67,3 +69,49 @@ class Message(QtWidgets.QWidget):
 
         self.message_box.adjustSize()
 
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        # Create a path for the bubble with tail
+        path = QtGui.QPainterPath()
+        rect = self.rect()
+        # print(dir(self.rect()))
+        print(self.rect().width(), self.rect().height())
+
+        bubble_rect = QRect(rect)
+
+        # Adjust rectangle to account for tail
+        tail_width = 10
+        tail_height = 15
+
+        if self.is_mine:
+            tail_points = [
+                QPoint(self.width() + 20 - 20, 70),
+                QPoint(self.width() + 20 - 30, 70),
+                QPoint(self.width() + 20 - 30, 60),
+            ]
+        else:
+            # Add tail on the left
+            tail_points = [
+                QPoint(10, 60),
+                QPoint(10, 70),
+                QPoint(0, 70),
+            ]
+
+        # Add the tail to the path
+        # print("before", path)
+        path.moveTo(tail_points[0])
+        # print("step 1", path)
+        path.lineTo(tail_points[1])
+        # print("step 2", path)
+        path.lineTo(tail_points[2])
+        # print("step 3", path)
+        path.lineTo(tail_points[0])
+        # print("step 4", path)
+
+        # Fill the bubble
+        painter.setPen(Qt.NoPen)
+        if self.is_mine:
+            painter.setBrush("#202324")
+        else:
+            painter.setBrush("#30302e")
+        painter.drawPath(path)

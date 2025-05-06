@@ -1,14 +1,17 @@
+from typing import List
+
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import Qt, Signal
 
-from data import CHAT_LIST
+from chat_types import ChatType
 
 
 class SidebarItem(QtWidgets.QWidget):
     clicked = Signal(object)  # Signal when item is clicked
 
-    def __init__(self, name, last_message, time):
+    def __init__(self, id, name, last_message, time):
         super().__init__()
+        self.id = id
         self.setFixedHeight(70)
 
         # Enable mouse tracking for hover effects
@@ -142,8 +145,10 @@ class Sidebar(QtWidgets.QWidget):
 
         # Sidebar items
         self.sidebar_items = []
-        for chat in CHAT_LIST:
-            item = SidebarItem(chat["name"], chat["last_message"], chat["time"])
+
+    def load_chats(self, chats: List[ChatType]):
+        for chat in chats:
+            item = SidebarItem(chat.id, chat.name, chat.last_message, chat.time)
             item.clicked.connect(self.handle_item_click)
             self.sidebar_items.append(item)
             self.layout.addWidget(self.sidebar_items[-1])
@@ -151,10 +156,11 @@ class Sidebar(QtWidgets.QWidget):
         if self.sidebar_items:
             # self.active_item()
             self.set_active_item(self.sidebar_items[0])
+            self.chat_selected.emit(str(self.sidebar_items[0].id))
 
     def handle_item_click(self, item):
         self.set_active_item(item)
-        self.chat_selected.emit(item.name_label.text())
+        self.chat_selected.emit(str(item.id))
 
     def set_active_item(self, active_item):
         if self.active_item:

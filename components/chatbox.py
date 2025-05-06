@@ -1,5 +1,9 @@
+from typing import List
+
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
+
+from chat_types import MessageType
 
 from .message import Message
 from .typing_indicator import TypingIndicator
@@ -28,15 +32,6 @@ class ChatBox(QtWidgets.QWidget):
 
         self.scroll_area.setWidget(self.messages_widget)
 
-        self.add_message("test message", "another", "18:30", False)
-        self.add_message(
-            "test message1, looooooooooooooooooooooooooooong messssssssssssssssssssssssssssage.",
-            "another",
-            "18:31",
-            True,
-        )
-        self.add_message("test message reply tc......s", "another", "18:32", False)
-
         # Input area
         self.input_part = QtWidgets.QHBoxLayout()
 
@@ -61,7 +56,8 @@ class ChatBox(QtWidgets.QWidget):
         self.layout.addWidget(self.scroll_area)
         self.layout.addLayout(self.input_part)
 
-    def add_message(self, text, author, message_time, is_mine):
+    def add_message(self, text: str, author: str, message_time: str):
+        is_mine = author == "me"
         message = Message(text, author, message_time, is_mine)
         self.messages_container.insertWidget(self.messages_container.count() - 1, message)
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
@@ -76,6 +72,15 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.text()
         if text.strip():
-            self.add_message(text, "me", "now", True)
+            self.add_message(text, "me", "now")
             self.chat_input.setText("")
             self.show_typing_indicator()
+
+    def load_messages(self, messages: List[MessageType]):
+        for i in reversed(range(self.messages_container.count())):
+            item = self.messages_container.itemAt(i)
+            if item.widget():  # Check if item has a widget
+                item.widget().deleteLater()
+            self.messages_container.removeItem(item)
+        for message in messages:
+            self.add_message(message.text, message.sender, message.time)

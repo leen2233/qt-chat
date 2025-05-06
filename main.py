@@ -8,6 +8,7 @@ from PySide6 import QtWidgets
 
 from components.chatbox import ChatBox
 from components.sidebar import Sidebar
+from data import CHAT_LIST
 
 
 class ChatApp(QtWidgets.QMainWindow):
@@ -28,6 +29,7 @@ class ChatApp(QtWidgets.QMainWindow):
 
         # Sidebar (chat list)
         self.sidebar = Sidebar()
+        self.sidebar.chat_selected.connect(self.chat_selected)
 
         # Main chat area
         self.chat_area = ChatBox()
@@ -37,6 +39,14 @@ class ChatApp(QtWidgets.QMainWindow):
 
         # Window settings
         self.resize(1000, 600)
+
+        self.sidebar.load_chats(CHAT_LIST)
+
+    def chat_selected(self, chat_id):
+        chat_id = int(chat_id)
+        for chat in CHAT_LIST:
+            if chat.id == chat_id:
+                self.chat_area.load_messages(chat.messages)
 
 
 if __name__ == "__main__":
