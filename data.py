@@ -3,6 +3,7 @@ from chat_types import ChatType, MessageType
 CHAT_LIST = [
     ChatType(
         id=1,
+        avatar="https://fastly.picsum.photos/id/689/200/200.jpg?hmac=2KHWG2UlfLNAWC1jiBz-LQ7b-TMOB4bcW-FVvdQ_7a4",
         name="John Doe",
         last_message="Hello!",
         time="3 min ago",
@@ -16,6 +17,7 @@ CHAT_LIST = [
     ),
     ChatType(
         id=2,
+        avatar="https://fastly.picsum.photos/id/25/200/200.jpg?hmac=G4ZRBi0qdWfQJQs_yxNQr_LJJlf0V1_Pdj8Tp41xsJU",
         name="Jane Smith",
         last_message="Yeah it's awesome!",
         time="5 hours ago",
@@ -29,6 +31,7 @@ CHAT_LIST = [
     ),
     ChatType(
         id=3,
+        avatar="https://fastly.picsum.photos/id/354/200/200.jpg?hmac=ykMwenrB5tcaT_UHlYwh2ZzAZ4Km48YOmwJTFCiodJ4",
         name="Alice Johnson",
         last_message="Hey!",
         time="just now",

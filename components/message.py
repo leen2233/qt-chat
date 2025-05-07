@@ -74,8 +74,6 @@ class Message(QtWidgets.QWidget):
         # Create a path for the bubble with tail
         path = QtGui.QPainterPath()
         rect = self.rect()
-        # print(dir(self.rect()))
-        print(self.rect().width(), self.rect().height())
 
         bubble_rect = QRect(rect)
 

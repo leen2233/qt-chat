@@ -12,6 +12,7 @@ class MessageType:
 @dataclass
 class ChatType:
     id: int
+    avatar: str
     name: str
     last_message: str
     time: str

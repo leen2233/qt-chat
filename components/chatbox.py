@@ -1,7 +1,9 @@
 from typing import List
 
+import qtawesome as qta
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
+from qtpy.QtCore import QSize
 
 from chat_types import MessageType
 
@@ -42,10 +44,11 @@ class ChatBox(QtWidgets.QWidget):
         self.chat_input.setStyleSheet("background-color: #30302e; border-radius: 10px; border: 0.5px solid grey")
         self.chat_input.returnPressed.connect(self.send_my_message)
 
-        self.send_button = QtWidgets.QPushButton("Send")
+        self.send_button = QtWidgets.QPushButton(qta.icon("fa6.paper-plane", color="white", size=(40, 40)), "")
+        self.send_button.setIconSize(QSize(22, 22))
         self.send_button.setFixedSize(50, 50)  # Set a fixed size for the button
         self.send_button.setStyleSheet(
-            "background-color: #c96442; color: white; border-radius: 25px; font-weight: bold;"
+            "background-color: #c96442; color: white; border-radius: 10px; font-weight: bold;"
         )
         self.send_button.clicked.connect(self.send_my_message)
 
