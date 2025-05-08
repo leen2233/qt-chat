@@ -5,7 +5,8 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from qtpy.QtCore import QSize
 
-from chat_types import MessageType
+from chat_types import ChatType, MessageType
+from components.rounded_avatar import RoundedAvatar
 
 from .message import Message
 from .typing_indicator import TypingIndicator
@@ -14,11 +15,64 @@ from .typing_indicator import TypingIndicator
 class ChatBox(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.sidebar_toggled = False
+        self.setContentsMargins(0, 0, 0, 0)
+
         self.setStyleSheet("""
             QWidget { background-color: #262624; color: #ffffff; }
         """)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 10, 10, 10)
+
+        self.header_widget = QtWidgets.QWidget()
+        self.header_widget.setFixedHeight(60)
+        self.header_widget.setStyleSheet("background-color: #1f1e1d; border-radius: 14px")
+        self.header_layout = QtWidgets.QHBoxLayout(self.header_widget)
+        self.header_layout.setAlignment(Qt.AlignJustify)
+        self.header_layout.setContentsMargins(10, 0, 0, 0)
+
+        self.avatar = RoundedAvatar(
+            "https://fastly.picsum.photos/id/354/200/200.jpg?hmac=ykMwenrB5tcaT_UHlYwh2ZzAZ4Km48YOmwJTFCiodJ4"
+        )
+
+        self.username = QtWidgets.QLabel("John Doe")
+        self.username.setStyleSheet("font-size: 16px")
+        self.username.setContentsMargins(0, 0, 0, 0)
+        self.last_seen = QtWidgets.QLabel("Last seen: 10:30 AM")
+        self.last_seen.setStyleSheet("font-size: 14px; color: grey")
+        self.last_seen.setContentsMargins(0, 0, 0, 0)
+
+        self.username_last_seen_layout = QtWidgets.QVBoxLayout()
+        self.username_last_seen_layout.setSpacing(0)
+        self.username_last_seen_layout.setContentsMargins(0, 0, 0, 0)
+        self.username_last_seen_layout.setAlignment(Qt.AlignVCenter)
+        self.username_last_seen_layout.addWidget(self.username)
+        self.username_last_seen_layout.addWidget(self.last_seen)
+
+        self.search_button = QtWidgets.QPushButton(qta.icon("fa5s.search", color="white"), "")
+        self.search_button.setStyleSheet("background-color: transparent; border: none;")
+        self.search_button.setIconSize(QSize(20, 20))
+
+        self.call_button = QtWidgets.QPushButton(qta.icon("fa5s.phone-alt", color="white"), "")
+        self.call_button.setStyleSheet("background-color: transparent; border: none;")
+        self.call_button.setIconSize(QSize(20, 20))
+
+        self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color="white"), "")
+        self.sidebar_button.setStyleSheet("background-color: transparent; border: none;")
+        self.sidebar_button.setIconSize(QSize(25, 25))
+        self.sidebar_button.clicked.connect(self.sidebar_toogle)
+
+        self.more_button = QtWidgets.QPushButton(qta.icon("mdi.dots-vertical", color="white"), "")
+        self.more_button.setStyleSheet("background-color: transparent; border: none;")
+        self.more_button.setIconSize(QSize(25, 25))
+
+        self.header_layout.addWidget(self.avatar)
+        self.header_layout.addLayout(self.username_last_seen_layout)
+        self.header_layout.addStretch()
+        self.header_layout.addWidget(self.search_button)
+        self.header_layout.addWidget(self.call_button)
+        self.header_layout.addWidget(self.sidebar_button)
+        self.header_layout.addWidget(self.more_button)
 
         # Scroll area for messages
         self.scroll_area = QtWidgets.QScrollArea()
@@ -56,6 +110,7 @@ class ChatBox(QtWidgets.QWidget):
         self.input_part.addWidget(self.send_button)
 
         # Add components to main layout
+        self.layout.addWidget(self.header_widget)
         self.layout.addWidget(self.scroll_area)
         self.layout.addLayout(self.input_part)
 
@@ -87,3 +142,16 @@ class ChatBox(QtWidgets.QWidget):
             self.messages_container.removeItem(item)
         for message in messages:
             self.add_message(message.text, message.sender, message.time)
+
+    def change_chat_user(self, chat: ChatType):
+        self.avatar.change_source(chat.avatar)
+        self.username.setText(chat.name)
+        self.last_seen.setText(chat.time)
+
+    def sidebar_toogle(self):
+        self.sidebar_button.setIcon(
+            qta.icon("msc.layout-sidebar-right-off", color="white")
+            if self.sidebar_toggled
+            else qta.icon("msc.layout-sidebar-right-off", color="#c96442")
+        )
+        self.sidebar_toggled = not self.sidebar_toggled

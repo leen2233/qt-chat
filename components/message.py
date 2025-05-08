@@ -25,7 +25,9 @@ class Message(QtWidgets.QWidget):
             )
             self.main_layout.setAlignment(Qt.AlignRight)
         else:
-            self.message_box.setStyleSheet("background-color: #30302e; border-radius: 10px; padding: 10px;border-bottom-left-radius: 0px")
+            self.message_box.setStyleSheet(
+                "background-color: #30302e; border-radius: 10px; padding: 10px;border-bottom-left-radius: 0px"
+            )
             self.main_layout.setAlignment(Qt.AlignLeft)
 
         self.message_layout = QtWidgets.QVBoxLayout(self.message_box)
@@ -76,6 +78,7 @@ class Message(QtWidgets.QWidget):
         rect = self.rect()
 
         bubble_rect = QRect(rect)
+        print(bubble_rect.height())
 
         # Adjust rectangle to account for tail
         tail_width = 10
@@ -83,16 +86,16 @@ class Message(QtWidgets.QWidget):
 
         if self.is_mine:
             tail_points = [
-                QPoint(self.width() + 20 - 20, 70),
-                QPoint(self.width() + 20 - 30, 70),
-                QPoint(self.width() + 20 - 30, 60),
+                QPoint(self.width() + 20 - 20, bubble_rect.height() - 9),
+                QPoint(self.width() + 20 - 30, bubble_rect.height() - 9),
+                QPoint(self.width() + 20 - 30, bubble_rect.height() - 19),
             ]
         else:
             # Add tail on the left
             tail_points = [
-                QPoint(10, 60),
-                QPoint(10, 70),
-                QPoint(0, 70),
+                QPoint(10, bubble_rect.height() - 19),
+                QPoint(10, bubble_rect.height() - 9),
+                QPoint(0, bubble_rect.height() - 9),
             ]
 
         # Add the tail to the path

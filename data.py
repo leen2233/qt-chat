@@ -13,6 +13,18 @@ CHAT_LIST = [
             MessageType(text="How's it going?", sender="me", time="10:05 AM"),
             MessageType(text="Pretty good, you?", sender="another", time="10:06 AM"),
             MessageType(text="Same here!", sender="me", time="10:07 AM"),
+            MessageType(
+                text="""
+                self.nm.finished.connect(self.on_image_loaded)
+                url = QUrl(avatar)
+                request = QNetworkRequest(url)
+                self.nm.get(request)
+
+                # Default placeholder for avatar
+                self.set_default_avatar()""",
+                sender="another",
+                time="10:07 AM",
+            ),
         ],
     ),
     ChatType(

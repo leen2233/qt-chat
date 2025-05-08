@@ -21,6 +21,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.central_widget = QtWidgets.QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QtWidgets.QHBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         # Dark theme stylesheet
         self.setStyleSheet("""
@@ -47,6 +48,7 @@ class ChatApp(QtWidgets.QMainWindow):
         for chat in CHAT_LIST:
             if chat.id == chat_id:
                 self.chat_area.load_messages(chat.messages)
+                self.chat_area.change_chat_user(chat)
 
 
 if __name__ == "__main__":
