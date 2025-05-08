@@ -2,7 +2,7 @@ from typing import List
 
 import qtawesome as qta
 from PySide6 import QtWidgets
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from qtpy.QtCore import QSize
 
 from chat_types import ChatType, MessageType
@@ -13,6 +13,8 @@ from .typing_indicator import TypingIndicator
 
 
 class ChatBox(QtWidgets.QWidget):
+    sidebar_toggled_signal = Signal(bool)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.sidebar_toggled = False
@@ -22,7 +24,7 @@ class ChatBox(QtWidgets.QWidget):
             QWidget { background-color: #262624; color: #ffffff; }
         """)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 10, 10, 10)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.header_widget = QtWidgets.QWidget()
         self.header_widget.setFixedHeight(60)
@@ -60,7 +62,7 @@ class ChatBox(QtWidgets.QWidget):
         self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color="white"), "")
         self.sidebar_button.setStyleSheet("background-color: transparent; border: none;")
         self.sidebar_button.setIconSize(QSize(25, 25))
-        self.sidebar_button.clicked.connect(self.sidebar_toogle)
+        self.sidebar_button.clicked.connect(self.sidebar_toggle)
 
         self.more_button = QtWidgets.QPushButton(qta.icon("mdi.dots-vertical", color="white"), "")
         self.more_button.setStyleSheet("background-color: transparent; border: none;")
@@ -148,10 +150,11 @@ class ChatBox(QtWidgets.QWidget):
         self.username.setText(chat.name)
         self.last_seen.setText(chat.time)
 
-    def sidebar_toogle(self):
+    def sidebar_toggle(self):
         self.sidebar_button.setIcon(
             qta.icon("msc.layout-sidebar-right-off", color="white")
             if self.sidebar_toggled
             else qta.icon("msc.layout-sidebar-right-off", color="#c96442")
         )
         self.sidebar_toggled = not self.sidebar_toggled
+        self.sidebar_toggled_signal.emit(self.sidebar_toggled)

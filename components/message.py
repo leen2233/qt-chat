@@ -78,7 +78,6 @@ class Message(QtWidgets.QWidget):
         rect = self.rect()
 
         bubble_rect = QRect(rect)
-        print(bubble_rect.height())
 
         # Adjust rectangle to account for tail
         tail_width = 10
@@ -99,15 +98,10 @@ class Message(QtWidgets.QWidget):
             ]
 
         # Add the tail to the path
-        # print("before", path)
         path.moveTo(tail_points[0])
-        # print("step 1", path)
         path.lineTo(tail_points[1])
-        # print("step 2", path)
         path.lineTo(tail_points[2])
-        # print("step 3", path)
         path.lineTo(tail_points[0])
-        # print("step 4", path)
 
         # Fill the bubble
         painter.setPen(Qt.NoPen)

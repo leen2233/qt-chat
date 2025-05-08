@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPixmap
@@ -5,15 +7,15 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
 
 class RoundedAvatar(QtWidgets.QWidget):
-    def __init__(self, avatar_url, parent=None):
+    def __init__(self, avatar_url, size: Tuple[int, int] = (40, 40), parent=None):
         super().__init__(parent)
-        self.setFixedSize(40, 40)
+        self.setFixedSize(size[0], size[1])
         self.setStyleSheet("background-color: transparent;")
-
+        self.size = size
         self.nm = QNetworkAccessManager()
 
         self.avatar = QtWidgets.QLabel(self)
-        self.avatar.setFixedSize(40, 40)
+        self.avatar.setFixedSize(size[0], size[1])
         self.avatar.setScaledContents(True)  # Important for proper scaling
         self.avatar.setStyleSheet("background-color: transparent;")
 
@@ -27,12 +29,11 @@ class RoundedAvatar(QtWidgets.QWidget):
 
     def set_default_avatar(self):
         """Set a default placeholder for the avatar"""
-        size = 40
-        pixmap = QPixmap(size, size)
+        pixmap = QPixmap(self.size[0], self.size[1])
         pixmap.fill(QColor("#808080"))  # Gray placeholder
 
         # Create rounded placeholder
-        rounded = self.create_rounded_pixmap(pixmap, size)
+        rounded = self.create_rounded_pixmap(pixmap, self.size[0])
         self.avatar.setPixmap(rounded)
 
     def create_rounded_pixmap(self, original_pixmap, size):
@@ -89,8 +90,9 @@ class RoundedAvatar(QtWidgets.QWidget):
         rounded = self.create_rounded_pixmap(pixmap, size)
 
         # Set the pixmap to the label
-        self.avatar.setPixmap(rounded)
-        reply.deleteLater()
+        if self.avatar:
+            self.avatar.setPixmap(rounded)
+            reply.deleteLater()
 
     def change_source(self, new_url):
         self.set_default_avatar()

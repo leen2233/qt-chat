@@ -1,181 +1,90 @@
-from typing import List
-
-from PySide6 import QtGui, QtWidgets
-from PySide6.QtCore import Qt, Signal
+import qtawesome as qta
+from PySide6 import QtCore, QtWidgets
+from qtpy.QtCore import Qt
 
 from chat_types import ChatType
 from components.rounded_avatar import RoundedAvatar
 
 
-class SidebarItem(QtWidgets.QWidget):
-    clicked = Signal(object)  # Signal when item is clicked
-
-    def __init__(self, id, avatar, name, last_message, time):
-        super().__init__()
-        self.id = id
-        self.setFixedHeight(70)
-
-        self.setMouseTracking(True)
-        self.setAutoFillBackground(True)
-
-        # Create color objects for different states
-        self.normal_color = QtGui.QColor("#1f1e1d")
-        self.hover_color = QtGui.QColor("#grey")
-        self.active_color = QtGui.QColor("#262624")
-
-        # Set initial palette
-        self.update_background(self.normal_color)
-
-        # Track hover and active states
-        self.is_hovered = False
-        self.is_active = False
-
-        # Set up the layout
-        self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.setContentsMargins(10, 0, 0, 0)
-        self.layout.setSpacing(0)
-
-        self.avatar = RoundedAvatar(avatar)
-
-        # Add avatar container to layout
-        self.layout.addWidget(self.avatar)
-
-        self.name_part = QtWidgets.QVBoxLayout()
-
-        self.name_time_part = QtWidgets.QHBoxLayout()
-        self.name_time_part.setContentsMargins(0, 15, 0, 0)
-        self.name_time_part.setSpacing(0)
-        self.name_time_part.setAlignment(Qt.AlignVCenter)
-
-        self.name_label = QtWidgets.QLabel(name)
-        self.name_label.setStyleSheet(
-            "font-weight: bold; background-color: transparent; border-color: transparent; color: white"
-        )
-        self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.name_label.setContentsMargins(10, 0, 0, 0)
-
-        self.time_label = QtWidgets.QLabel(time)
-        self.time_label.setStyleSheet(
-            "font-size: 12px; color: #888; background-color: transparent; border-color: transparent"
-        )
-
-        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.time_label.setContentsMargins(10, 0, 10, 0)
-
-        self.name_time_part.addWidget(self.name_label)
-        self.name_time_part.addWidget(self.time_label)
-
-        self.last_message_label = QtWidgets.QLabel(last_message)
-        self.last_message_label.setContentsMargins(10, 0, 0, 15)
-        self.last_message_label.setStyleSheet(
-            "font-size: 14px; color: #ccc; background-color: transparent; border-color: transparent"
-        )
-
-        self.name_part.addLayout(self.name_time_part)
-        self.name_part.addWidget(self.last_message_label)
-
-        self.layout.addLayout(self.name_part)
-
-    def update_background(self, color):
-        """Update the background color using palette"""
-        palette = self.palette()
-        palette.setColor(QtGui.QPalette.Window, color)
-        self.setPalette(palette)
-
-    def enterEvent(self, event):
-        """Handle mouse enter event"""
-        if not self.is_active:  # Only change color if not active
-            self.is_hovered = True
-            self.update_background(self.hover_color)
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Handle mouse leave event"""
-        if not self.is_active:  # Only change color if not active
-            self.is_hovered = False
-            self.update_background(self.normal_color)
-        super().leaveEvent(event)
-
-    def mousePressEvent(self, event):
-        """Handle mouse press event"""
-        print("button cicked ", event)
-        if event.button() == Qt.LeftButton:
-            self.clicked.emit(self)  # Emit signal with self as argument
-        super().mousePressEvent(event)
-
-    def set_active(self, active):
-        """Set this item as active/inactive"""
-        self.is_active = active
-        if active:
-            self.is_hovered = False
-            self.update_background(self.active_color)
-        else:
-            if self.is_hovered:
-                self.update_background(self.hover_color)
-            else:
-                self.update_background(self.normal_color)
-
-
 class Sidebar(QtWidgets.QWidget):
-    chat_selected = Signal(str)
+    sidebar_closed = QtCore.Signal(str)
 
-    def __init__(self):
-        super().__init__()
-        self.active_item = None
-        self.setFixedWidth(250)
-        self.setObjectName("Sidebar")
-        self.setContentsMargins(0, 0, 0, 0)
-
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(QtGui.QPalette.Window, QtGui.QColor("#1f1e1d"))
-        self.setPalette(palette)
-
+    def __init__(self, chat: ChatType, parent=None, *args, **kwargs):
+        super().__init__(parent)
+        self.setMinimumWidth(300)
+        self.setObjectName("sidebar")
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setStyleSheet("""#sidebar {background-color: #1f1e1d;border-radius: 14px;}""")
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
         self.layout.setAlignment(Qt.AlignTop)
+        self.layout.setContentsMargins(20, 20, 20, 20)
 
-        self.chats_layout = QtWidgets.QVBoxLayout(self)
-        self.chats_layout.setContentsMargins(0, 0, 0, 0)
-        self.chats_layout.setSpacing(0)
-        self.chats_layout.setAlignment(Qt.AlignTop)
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.search_chat_input = QtWidgets.QLineEdit()
-        self.search_chat_input.setPlaceholderText("Search chats...")
-        self.search_chat_input.setFixedHeight(60)
-        self.search_chat_input.setTextMargins(10, 10, 10, 10)
-        self.search_chat_input.setContentsMargins(10, 10, 10, 10)
-        self.search_chat_input.setStyleSheet(
-            "background-color: #30302e; border-radius: 20px; border: 0.5px solid grey; color: white"
-        )
+        info = QtWidgets.QLabel("User Info")
+        info.setStyleSheet("font-size: 16px; color: white;")
+        close_button = QtWidgets.QPushButton(qta.icon("mdi.close", color="white", size=(40, 40)), "")
+        close_button.setIconSize(QtCore.QSize(30, 30))
+        close_button.setStyleSheet("background: transparent; border: none;")
+        close_button.clicked.connect(self.close)
+        header_layout.addWidget(info)
+        header_layout.addStretch()
+        header_layout.addWidget(close_button)
 
-        self.layout.addWidget(self.search_chat_input)
-        self.layout.addLayout(self.chats_layout)
+        user_info_layout = QtWidgets.QHBoxLayout()
+        user_info_layout.setContentsMargins(0, 0, 0, 0)
+        user_info_layout.setAlignment(Qt.AlignLeft)
+        user_info_layout.setSpacing(10)
 
-        # Sidebar items
-        self.sidebar_items = []
+        username_time_layout = QtWidgets.QVBoxLayout()
+        username_time_layout.setContentsMargins(0, 0, 0, 0)
+        username_time_layout.setAlignment(Qt.AlignLeft)
+        username_time_layout.setSpacing(5)
 
-    def load_chats(self, chats: List[ChatType]):
-        for chat in chats:
-            item = SidebarItem(chat.id, chat.avatar, chat.name, chat.last_message, chat.time)
-            item.clicked.connect(self.handle_item_click)
-            self.sidebar_items.append(item)
-            self.chats_layout.addWidget(self.sidebar_items[-1])
+        self.name = QtWidgets.QLabel(chat.name if chat else "")
+        self.name.setStyleSheet("font-size: 20px; color: white;")
+        self.time = QtWidgets.QLabel(chat.time if chat else "")
+        self.time.setStyleSheet("font-size: 14px; color: grey;")
+        username_time_layout.addWidget(self.name)
+        username_time_layout.addWidget(self.time)
 
-        if self.sidebar_items:
-            # self.active_item()
-            self.set_active_item(self.sidebar_items[0])
-            self.chat_selected.emit(str(self.sidebar_items[0].id))
+        self.avatar = RoundedAvatar(avatar_url=chat.avatar if chat else "", size=(60, 60))
+        user_info_layout.addWidget(self.avatar)
+        user_info_layout.addLayout(username_time_layout)
 
-    def handle_item_click(self, item):
-        self.set_active_item(item)
-        self.chat_selected.emit(str(item.id))
+        self.layout.addLayout(header_layout)
+        self.layout.addLayout(user_info_layout)
 
-    def set_active_item(self, active_item):
-        if self.active_item:
-            self.active_item.set_active(False)
+        self.setFixedWidth(0)
+        QtCore.QTimer.singleShot(0, self.show_animation)
 
-        active_item.set_active(True)
-        self.active_item = active_item
+    def change_chat(self, chat: ChatType):
+        self.avatar.change_source(chat.avatar)
+        self.name.setText(chat.name)
+        self.time.setText(chat.time)
+
+    def close(self):
+        self.sidebar_closed.emit("closed")
+        self.hide_animation(self.deleteLater)
+
+    def show_animation(self):
+        self.animation = QtCore.QPropertyAnimation(self, b"minimumWidth")
+        self.animation.setDuration(200)  # Animation duration in milliseconds
+        self.animation.setStartValue(0)
+        self.animation.setEndValue(300)  # Final width
+        self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)  # Smooth animation curve
+        self.animation.start()
+
+    def hide_animation(self, on_finished):
+        self.animation = QtCore.QPropertyAnimation(self, b"minimumWidth")
+        self.animation.setDuration(200)
+        self.animation.setStartValue(300)
+        self.animation.setEndValue(0)
+        self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+
+        # Connect finished signal if callback provided
+        if on_finished:
+            self.animation.finished.connect(on_finished)
+
+        self.animation.start()
