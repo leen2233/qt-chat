@@ -25,6 +25,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.main_layout = QtWidgets.QHBoxLayout(self.central_widget)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_layout.setSpacing(10)
 
         # Dark theme stylesheet
         self.setStyleSheet("""
@@ -45,6 +46,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.resize(1000, 600)
 
         self.chat_list.load_chats(CHAT_LIST)
+        self.toggle_sidebar(True)
 
     def chat_selected(self, chat_id):
         chat_id = int(chat_id)

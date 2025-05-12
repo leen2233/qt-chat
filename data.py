@@ -1,4 +1,4 @@
-from chat_types import ChatType, MessageType
+from chat_types import ChatType, MessageType, StatType
 
 CHAT_LIST = [
     ChatType(
@@ -7,6 +7,9 @@ CHAT_LIST = [
         name="John Doe",
         last_message="Hello!",
         time="3 min ago",
+        phone_number="+99361234567",
+        username="john244",
+        stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
         messages=[
             MessageType(text="Hi there!", sender="me", time="10:00 AM"),
             MessageType(text="Hello!", sender="another", time="10:03 AM"),
@@ -33,6 +36,9 @@ CHAT_LIST = [
         name="Jane Smith",
         last_message="Yeah it's awesome!",
         time="5 hours ago",
+        phone_number="+99361234563",
+        username="jane_smith",
+        stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
         messages=[
             MessageType(text="Check this out!", sender="me", time="2:00 AM"),
             MessageType(text="Yeah it's awesome!", sender="another", time="2:05 AM"),
@@ -47,6 +53,9 @@ CHAT_LIST = [
         name="Alice Johnson",
         last_message="Hey!",
         time="just now",
+        phone_number="+99361234565",
+        username="alice.johnson",
+        stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
         messages=[
             MessageType(text="Hey!", sender="another", time="10:30 AM"),
             MessageType(text="What's up?", sender="me", time="10:31 AM"),

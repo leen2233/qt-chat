@@ -1,7 +1,7 @@
 from typing import List
 
 import qtawesome as qta
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 from PySide6.QtCore import Qt, Signal
 from qtpy.QtCore import QSize
 
@@ -52,19 +52,23 @@ class ChatBox(QtWidgets.QWidget):
         self.username_last_seen_layout.addWidget(self.last_seen)
 
         self.search_button = QtWidgets.QPushButton(qta.icon("fa5s.search", color="white"), "")
+        self.search_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.search_button.setStyleSheet("background-color: transparent; border: none;")
         self.search_button.setIconSize(QSize(20, 20))
 
         self.call_button = QtWidgets.QPushButton(qta.icon("fa5s.phone-alt", color="white"), "")
+        self.call_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.call_button.setStyleSheet("background-color: transparent; border: none;")
         self.call_button.setIconSize(QSize(20, 20))
 
         self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color="white"), "")
+        self.sidebar_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.sidebar_button.setStyleSheet("background-color: transparent; border: none;")
         self.sidebar_button.setIconSize(QSize(25, 25))
         self.sidebar_button.clicked.connect(self.sidebar_toggle)
 
         self.more_button = QtWidgets.QPushButton(qta.icon("mdi.dots-vertical", color="white"), "")
+        self.more_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.more_button.setStyleSheet("background-color: transparent; border: none;")
         self.more_button.setIconSize(QSize(25, 25))
 

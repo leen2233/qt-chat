@@ -162,7 +162,6 @@ class ChatList(QtWidgets.QWidget):
             self.chats_layout.addWidget(self.chat_items[-1])
 
         if self.chat_items:
-            # self.active_item()
             self.set_active_item(self.chat_items[0])
             self.chat_selected.emit(str(self.chat_items[0].id))
 

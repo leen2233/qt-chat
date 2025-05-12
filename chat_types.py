@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -10,10 +10,22 @@ class MessageType:
 
 
 @dataclass
+class StatType:
+    photos: Optional[int]
+    videos: Optional[int]
+    files: Optional[int]
+    links: Optional[int]
+    voices: Optional[int]
+
+
+@dataclass
 class ChatType:
     id: int
     avatar: str
     name: str
     last_message: str
     time: str
+    phone_number: str
+    username: str
+    stats: StatType
     messages: List[MessageType]
