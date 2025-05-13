@@ -14,7 +14,7 @@ class ChatItem(QtWidgets.QWidget):
         super().__init__()
         self.id = id
         self.setFixedHeight(70)
-
+        self.setObjectName("chat-list-item")
         self.setMouseTracking(True)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
@@ -122,7 +122,8 @@ class ChatList(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.active_item = None
-        self.setFixedWidth(250)
+        self.setMinimumWidth(250)
+        self.setMaximumWidth(500)
         self.setObjectName("Sidebar")
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -145,7 +146,7 @@ class ChatList(QtWidgets.QWidget):
         self.search_chat_input.setTextMargins(10, 10, 10, 10)
         self.search_chat_input.setContentsMargins(10, 10, 10, 10)
         self.search_chat_input.setStyleSheet(
-            "background-color: #30302e; border-radius: 20px; border: 0.5px solid grey; color: white"
+            "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; color: white"
         )
 
         self.layout.addWidget(self.search_chat_input)
@@ -155,6 +156,7 @@ class ChatList(QtWidgets.QWidget):
         self.chat_items = []
 
     def load_chats(self, chats: List[ChatType]):
+        self.chat_items = []
         for chat in chats:
             item = ChatItem(chat.id, chat.avatar, chat.name, chat.last_message, chat.time)
             item.clicked.connect(self.handle_item_click)
@@ -168,6 +170,12 @@ class ChatList(QtWidgets.QWidget):
     def handle_item_click(self, item):
         self.set_active_item(item)
         self.chat_selected.emit(str(item.id))
+
+    def set_active_item_by_id(self, chat_id):
+        for item in self.chat_items:
+            if item.id == chat_id:
+                self.set_active_item(item)
+                break
 
     def set_active_item(self, active_item):
         if self.active_item:

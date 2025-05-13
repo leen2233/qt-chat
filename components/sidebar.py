@@ -1,7 +1,9 @@
-from PySide6.QtGui import QCursor
+from typing import Optional
+
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCursor
 
 from chat_types import ChatType
 from components.rounded_avatar import RoundedAvatar
@@ -38,7 +40,6 @@ class StatItem(QtWidgets.QWidget):
         self.layout.addWidget(self.icon)
         self.layout.addWidget(self.text)
 
-
     def update_background(self, color):
         """Update the background color using palette"""
         self.setStyleSheet(f"background-color: {color}; border-radius: 14px;")
@@ -61,9 +62,10 @@ class StatItem(QtWidgets.QWidget):
 class Sidebar(QtWidgets.QWidget):
     sidebar_closed = QtCore.Signal(str)
 
-    def __init__(self, chat: ChatType, parent=None, *args, **kwargs):
+    def __init__(self, chat: Optional[ChatType] = None, parent=None, *args, **kwargs):
         super().__init__(parent)
         self.setMinimumWidth(300)
+        self.setMaximumWidth(500)
         self.setObjectName("sidebar")
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
         self.setStyleSheet("""#sidebar {background-color: #1f1e1d;border-radius: 14px;}""")
@@ -115,8 +117,9 @@ class Sidebar(QtWidgets.QWidget):
         icon.setPixmap(qta.icon("ri.contacts-book-2-fill", color="white").pixmap(40, 40))
         phone_number_description_layout = QtWidgets.QVBoxLayout()
         phone_number_description_layout.setSpacing(0)
-        self.phone_number = QtWidgets.QLabel(chat.phone_number)
+        self.phone_number = QtWidgets.QLabel(chat.phone_number if chat else "")
         self.phone_number.setStyleSheet("font-size: 14px; color: white")
+        self.phone_number.setCursor(QCursor(Qt.PointingHandCursor))
         description = QtWidgets.QLabel("Mobile")
         description.setStyleSheet("font-size: 10px; color: grey")
         phone_number_description_layout.addWidget(self.phone_number)
@@ -124,8 +127,6 @@ class Sidebar(QtWidgets.QWidget):
 
         phone_info_layout.addWidget(icon)
         phone_info_layout.addLayout(phone_number_description_layout)
-
-
 
         username_info_layout = QtWidgets.QHBoxLayout()
         username_info_layout.setContentsMargins(10, 0, 0, 0)
@@ -135,7 +136,8 @@ class Sidebar(QtWidgets.QWidget):
         icon.setPixmap(qta.icon("mdi6.information-outline", color="white").pixmap(40, 40))
         username_description_layout = QtWidgets.QVBoxLayout()
         username_description_layout.setSpacing(0)
-        self.username = QtWidgets.QLabel("@" + chat.username)
+        self.username = QtWidgets.QLabel("@" + chat.username if chat else "")
+        self.username.setCursor(QCursor(Qt.PointingHandCursor))
         self.username.setStyleSheet("font-size: 14px; color: #c96442")
         description = QtWidgets.QLabel("Username")
         description.setStyleSheet("font-size: 10px; color: grey")
@@ -145,28 +147,28 @@ class Sidebar(QtWidgets.QWidget):
         username_info_layout.addWidget(icon)
         username_info_layout.addLayout(username_description_layout)
 
-
-        stats = QtWidgets.QVBoxLayout()
-        stats.setSpacing(2)
-        if chat.stats.photos:
-            stats.addWidget(StatItem("mdi.google-photos", f"{chat.stats.photos} Photos", lambda: print("clicked")))
-        if chat.stats.videos:
-            stats.addWidget(StatItem("fa5s.video", f"{chat.stats.videos} Videos", None))
-        if chat.stats.files:
-            stats.addWidget(StatItem("fa5.file-alt", f"{chat.stats.files} Files", None))
-        if chat.stats.links:
-            stats.addWidget(StatItem("fa5s.link", f"{chat.stats.links} Links", None))
-        if chat.stats.voices:
-            stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
-
+        self.stats = QtWidgets.QVBoxLayout()
+        self.stats.setSpacing(2)
+        if chat:
+            if chat.stats.photos:
+                self.stats.addWidget(
+                    StatItem("mdi.google-photos", f"{chat.stats.photos} Photos", lambda: print("clicked"))
+                )
+            if chat.stats.videos:
+                self.stats.addWidget(StatItem("fa5s.video", f"{chat.stats.videos} Videos", None))
+            if chat.stats.files:
+                self.stats.addWidget(StatItem("fa5.file-alt", f"{chat.stats.files} Files", None))
+            if chat.stats.links:
+                self.stats.addWidget(StatItem("fa5s.link", f"{chat.stats.links} Links", None))
+            if chat.stats.voices:
+                self.stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
 
         actions = QtWidgets.QVBoxLayout()
         actions.setSpacing(2)
         actions.addWidget(StatItem("mdi.share", "Share this contact", None))
         actions.addWidget(StatItem("mdi.square-edit-outline", "Edit this contact", None))
         actions.addWidget(StatItem("mdi.delete", "Delete this contact", None))
-        actions.addWidget(StatItem("mdi.block-helper", "Block this user", None, color= "red"))
-
+        actions.addWidget(StatItem("mdi.block-helper", "Block this user", None, color="red"))
 
         self.layout.addLayout(header_layout)
         self.layout.addLayout(user_info_layout)
@@ -174,10 +176,9 @@ class Sidebar(QtWidgets.QWidget):
         self.layout.addLayout(phone_info_layout)
         self.layout.addLayout(username_info_layout)
         self.layout.addWidget(Divider())
-        self.layout.addLayout(stats)
+        self.layout.addLayout(self.stats)
         self.layout.addWidget(Divider())
         self.layout.addLayout(actions)
-
 
         self.setFixedWidth(0)
         QtCore.QTimer.singleShot(0, self.show_animation)
@@ -188,6 +189,21 @@ class Sidebar(QtWidgets.QWidget):
         self.time.setText(chat.time)
         self.phone_number.setText(chat.phone_number)
         self.username.setText("@" + chat.username)
+        while self.stats.count() > 0:
+            item = self.stats.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        if chat.stats.photos:
+            self.stats.addWidget(StatItem("mdi.google-photos", f"{chat.stats.photos} Photos", lambda: print("clicked")))
+        if chat.stats.videos:
+            self.stats.addWidget(StatItem("fa5s.video", f"{chat.stats.videos} Videos", None))
+        if chat.stats.files:
+            self.stats.addWidget(StatItem("fa5.file-alt", f"{chat.stats.files} Files", None))
+        if chat.stats.links:
+            self.stats.addWidget(StatItem("fa5s.link", f"{chat.stats.links} Links", None))
+        if chat.stats.voices:
+            self.stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
 
     def close(self):
         self.sidebar_closed.emit("closed")

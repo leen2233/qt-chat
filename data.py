@@ -38,7 +38,7 @@ CHAT_LIST = [
         time="5 hours ago",
         phone_number="+99361234563",
         username="jane_smith",
-        stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
+        stats=StatType(photos=560, videos=20, files=254, links=825, voices=1),
         messages=[
             MessageType(text="Check this out!", sender="me", time="2:00 AM"),
             MessageType(text="Yeah it's awesome!", sender="another", time="2:05 AM"),
@@ -55,7 +55,7 @@ CHAT_LIST = [
         time="just now",
         phone_number="+99361234565",
         username="alice.johnson",
-        stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
+        stats=StatType(photos=69, videos=34, links=360, voices=None, files=None),
         messages=[
             MessageType(text="Hey!", sender="another", time="10:30 AM"),
             MessageType(text="What's up?", sender="me", time="10:31 AM"),

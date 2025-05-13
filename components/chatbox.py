@@ -2,11 +2,12 @@ from typing import List
 
 import qtawesome as qta
 from PySide6 import QtWidgets, QtCore
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QTimer, Qt, Signal
 from qtpy.QtCore import QSize
 
 from chat_types import ChatType, MessageType
 from components.rounded_avatar import RoundedAvatar
+from data import CHAT_LIST
 
 from .message import Message
 from .typing_indicator import TypingIndicator
@@ -18,6 +19,7 @@ class ChatBox(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.sidebar_toggled = False
+        self.chat = None
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -82,6 +84,24 @@ class ChatBox(QtWidgets.QWidget):
 
         # Scroll area for messages
         self.scroll_area = QtWidgets.QScrollArea()
+        self.scroll_area.setStyleSheet("""
+            QScrollBar:vertical {
+                background: #30302e;
+                width: 8px;
+                border-radius: 3px;
+                margin: 0px 0px 0px 0px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #404344;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #606060;
+            }
+            """)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
 
@@ -123,10 +143,13 @@ class ChatBox(QtWidgets.QWidget):
     def add_message(self, text: str, author: str, message_time: str):
         is_mine = author == "me"
         message = Message(text, author, message_time, is_mine)
-        self.messages_container.insertWidget(self.messages_container.count() - 1, message)
-        self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
+        self.messages_container.addWidget(message)
+        QTimer.singleShot(50, self.scroll_to_bottom)
 
         return message
+
+    def scroll_to_bottom(self):
+        self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
 
     def show_typing_indicator(self):
         indicator = TypingIndicator()
@@ -137,8 +160,13 @@ class ChatBox(QtWidgets.QWidget):
         text = self.chat_input.text()
         if text.strip():
             self.add_message(text, "me", "now")
+            message_type = MessageType(text=text, sender="me", time="now")
+            if self.chat:
+                for chat in CHAT_LIST:
+                    if chat.id == self.chat.id:
+                        chat.messages.append(message_type)
+                        break
             self.chat_input.setText("")
-            self.show_typing_indicator()
 
     def load_messages(self, messages: List[MessageType]):
         for i in reversed(range(self.messages_container.count())):
@@ -153,6 +181,7 @@ class ChatBox(QtWidgets.QWidget):
         self.avatar.change_source(chat.avatar)
         self.username.setText(chat.name)
         self.last_seen.setText(chat.time)
+        self.chat = chat
 
     def sidebar_toggle(self):
         self.sidebar_button.setIcon(
