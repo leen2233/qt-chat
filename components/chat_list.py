@@ -1,10 +1,13 @@
 from typing import List
 
+import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt, Signal
+from qtpy.QtWidgets import QWidgetAction
 
 from chat_types import ChatType
 from components.rounded_avatar import RoundedAvatar
+from styles import context_menu_style
 
 
 class ChatItem(QtWidgets.QWidget):
@@ -103,6 +106,24 @@ class ChatItem(QtWidgets.QWidget):
             self.clicked.emit(self)  # Emit signal with self as argument
         super().mousePressEvent(event)
 
+    def contextMenuEvent(self, event):
+        context_menu = QtWidgets.QMenu(self)
+        context_menu.addAction(qta.icon("mdi.archive-arrow-down-outline", color="white"), "Archieve")
+        context_menu.addAction(qta.icon("mdi.pin-outline", color="white"), "Pin")
+        context_menu.addAction(qta.icon("mdi.volume-mute", color="white"), "Mute Notifications")
+        context_menu.addAction(qta.icon("mdi.playlist-remove", color="white"), "Clear History")
+        context_menu.addSeparator()
+
+        button = QtWidgets.QPushButton(qta.icon("mdi.delete", color="red"), "Delete")
+
+        delete_chat_action = QWidgetAction(context_menu)
+        delete_chat_action.setDefaultWidget(button)
+        context_menu.addAction(delete_chat_action)
+
+        context_menu.setStyleSheet(context_menu_style)
+        action = context_menu.exec_(event.globalPos())
+        print(action)
+
     def set_active(self, active):
         """Set this item as active/inactive"""
         self.is_active = active
@@ -123,7 +144,7 @@ class ChatList(QtWidgets.QWidget):
         super().__init__()
         self.active_item = None
         self.setMinimumWidth(250)
-        self.setMaximumWidth(500)
+        self.setMaximumWidth(400)
         self.setObjectName("Sidebar")
         self.setContentsMargins(0, 0, 0, 0)
 

@@ -12,20 +12,19 @@ CHAT_LIST = [
         stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
         messages=[
             MessageType(text="Hi there!", sender="me", time="10:00 AM"),
-            MessageType(text="Hello!", sender="another", time="10:03 AM"),
+            MessageType(text="Hello!", sender="another", time="10:03 AM", reply_to="Hi there!"),
             MessageType(text="How's it going?", sender="me", time="10:05 AM"),
             MessageType(text="Pretty good, you?", sender="another", time="10:06 AM"),
             MessageType(text="Same here!", sender="me", time="10:07 AM"),
             MessageType(
-                text="""
-                self.nm.finished.connect(self.on_image_loaded)
-                url = QUrl(avatar)
-                request = QNetworkRequest(url)
-                self.nm.get(request)
-
-                # Default placeholder for avatar
-                self.set_default_avatar()""",
+                text="""But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?""",
                 sender="another",
+                time="10:07 AM",
+            ),
+            MessageType(
+                text="cool",
+                reply_to="""But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?""",
+                sender="me",
                 time="10:07 AM",
             ),
         ],

@@ -1,15 +1,23 @@
-from PySide6 import QtGui, QtWidgets
-from PySide6.QtCore import QPoint, QRect, Qt
+import qtawesome as qta
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import QPoint, QRect, Qt, Signal
+
+from chat_types import MessageType
+from styles import context_menu_style, reply_to_label_style
 
 
 class Message(QtWidgets.QWidget):
-    def __init__(self, message, author, time, is_mine=False):
-        super().__init__()
-        self.message = message
-        self.author = author
-        self.time = time
-        self.is_mine = is_mine
+    reply_clicked = Signal(MessageType)
 
+    def __init__(self, message: MessageType):
+        super().__init__()
+        self.message_type = message
+        self.message = message.text
+        self.author = message.sender
+        self.time = message.time
+        self.is_mine = message.sender == "me"
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
         # self.setContentsMargins(0, 0, 0, 0)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -19,9 +27,9 @@ class Message(QtWidgets.QWidget):
         self.message_box.setMinimumWidth(10)
         self.message_box.setMaximumWidth(600)  # Maximum width for any message
 
-        if is_mine:
-            self.setStyleSheet(
-                "QWidget { background-color: #202324; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px}"
+        if self.is_mine:
+            self.message_box.setStyleSheet(
+                "background-color: #202324; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px"
             )
             self.main_layout.setAlignment(Qt.AlignRight)
         else:
@@ -34,7 +42,20 @@ class Message(QtWidgets.QWidget):
         self.message_layout.setContentsMargins(0, 0, 0, 0)
         self.message_layout.setSpacing(0)
 
+        if message.reply_to:
+            self.reply_to_label = QtWidgets.QPushButton(f" {message.reply_to[:100]}")
+            self.reply_to_label.setMaximumHeight(80)
+            self.reply_to_label.setObjectName("reply_to_label")
+            self.reply_to_label.setStyleSheet(reply_to_label_style)
+            self.reply_to_label.setContentsMargins(0, 0, 0, 0)
+            self.reply_to_label.setCursor(Qt.PointingHandCursor)
+            self.message_layout.addWidget(self.reply_to_label)
+
         self.text = QtWidgets.QLabel(self.message)
+        self.text.setMaximumWidth(600)
+        self.text.setWordWrap(True)
+        # self.text.setStyleSheet("padding: 10px")
+        # self.text.setContentsMargins(0, 0, 0, -10)
         # self.text.setWordWrap(True)
 
         self.time_label = QtWidgets.QLabel(self.time)
@@ -47,29 +68,32 @@ class Message(QtWidgets.QWidget):
 
         self.main_layout.addWidget(self.message_box)
 
-        self.adjust_width_to_text()
+    #     self.adjust_width_to_text()
 
-    def adjust_width_to_text(self):
-        font_metrics = QtGui.QFontMetrics(self.text.font())
+    # def adjust_width_to_text(self):
+    #     font_metrics = QtGui.QFontMetrics(self.text.font())
 
-        lines = self.message.split("\n")
-        widest_line_width = 0
+    #     lines = self.message.split("\n")
+    #     widest_line_width = 0
 
-        for line in lines:
-            line_width = font_metrics.horizontalAdvance(line)
-            widest_line_width = max(widest_line_width, line_width)
+    #     for line in lines:
+    #         line_width = font_metrics.horizontalAdvance(line)
+    #         widest_line_width = max(widest_line_width, line_width)
 
-        padding = 60
-        time_width = font_metrics.horizontalAdvance(self.time)
+    #     padding = 60
+    #     time_width = font_metrics.horizontalAdvance(self.time)
 
-        desired_width = min(max(widest_line_width, time_width) + padding, 400)
+    #     desired_width = min(max(widest_line_width, time_width) + padding, 400)
 
-        self.message_box.setMinimumWidth(min(desired_width, 100))
+    #     self.message_box.setMinimumWidth(min(desired_width, 100))
 
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        self.message_box.setSizePolicy(size_policy)
+    #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+    #     self.message_box.setSizePolicy(size_policy)
 
-        self.message_box.adjustSize()
+    #     self.message_box.adjustSize()
+
+    def mouseDoubleClickEvent(self, event):
+        self.reply_clicked.emit(self.message_type)
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -110,3 +134,22 @@ class Message(QtWidgets.QWidget):
         else:
             painter.setBrush("#30302e")
         painter.drawPath(path)
+        self.setMinimumHeight(self.text.height() + 45)
+
+    def contextMenuEvent(self, event):
+        # self.setStyleSheet(
+        #     "QWidget { background-color: white; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px}"
+        # )
+        context_menu = QtWidgets.QMenu(self)
+        reply_action = context_menu.addAction(qta.icon("mdi.reply-outline", color="white"), "Reply")
+        select_action = context_menu.addAction(qta.icon("mdi.selection-ellipse-arrow-inside", color="white"), "Select")
+        pin_action = context_menu.addAction(qta.icon("mdi.pin-outline", color="white"), "Pin")
+        copy_action = context_menu.addAction(qta.icon("mdi.content-copy", color="white"), "Copy Text")
+        forward_action = context_menu.addAction(qta.icon("mdi.arrow-top-right-bold-outline", color="white"), "Forward")
+        context_menu.addSeparator()
+        delete_action = context_menu.addAction(qta.icon("mdi.trash-can-outline", color="white"), "Delete")
+
+        context_menu.setStyleSheet(context_menu_style)
+        action = context_menu.exec_(event.globalPos())
+        if action == reply_action:
+            self.reply_clicked.emit(self.message_type)

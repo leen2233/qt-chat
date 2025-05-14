@@ -26,8 +26,8 @@ class ChatApp(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.main_layout = QtWidgets.QHBoxLayout(self.central_widget)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_layout.setSpacing(10)
 
         # Create and set up splitter
         self.splitter = QtWidgets.QSplitter(Qt.Horizontal)
@@ -100,7 +100,7 @@ class ChatApp(QtWidgets.QMainWindow):
         if state is True:
             self.sidebar = Sidebar(self.selected_chat)
             self.sidebar.sidebar_closed.connect(self.sidebar_closed)
-            self.splitter.addWidget(self.sidebar)
+            self.main_layout.addWidget(self.sidebar)
             self.sidebar_opened = True
         else:
             self.sidebar_opened = False

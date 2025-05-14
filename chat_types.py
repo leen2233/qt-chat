@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -7,6 +7,7 @@ class MessageType:
     text: str
     sender: str
     time: str
+    reply_to: Optional[str] = None
 
 
 @dataclass
