@@ -1,3 +1,4 @@
+import random
 from typing import List
 
 import qtawesome as qta
@@ -7,12 +8,12 @@ from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QHBoxLayout
 
 from chat_types import ChatType, MessageType
-from components.rounded_avatar import RoundedAvatar
+from components.ui.message import Message
+from components.ui.rounded_avatar import RoundedAvatar
+from components.ui.text_edit import TextEdit
+from components.ui.typing_indicator import TypingIndicator
 from data import CHAT_LIST
 from styles import replying_to_label_style
-
-from .message import Message
-from .typing_indicator import TypingIndicator
 
 
 class ChatBox(QtWidgets.QWidget):
@@ -23,6 +24,7 @@ class ChatBox(QtWidgets.QWidget):
         self.sidebar_toggled = False
         self.chat = None
         self.reply_opened = False
+        self.reply_to_message = None
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -140,13 +142,14 @@ class ChatBox(QtWidgets.QWidget):
         # )
         input_and_button_layout = QHBoxLayout()
 
-        self.chat_input = QtWidgets.QTextEdit()
+        self.chat_input = TextEdit()
         self.chat_input.setPlaceholderText("Type your message here...")
         self.chat_input.setMaximumHeight(150)
         self.chat_input.setMinimumHeight(50)
         self.chat_input.setFixedHeight(50)
         self.chat_input.textChanged.connect(self.adjust_input_height)
         self.chat_input.setStyleSheet("padding: 10px")
+        self.chat_input.enterPressed.connect(self.send_my_message)
 
         self.chat_input.setViewportMargins(10, 10, 10, 10)
         self.chat_input.setStyleSheet("background-color: #30302e; border-radius: 10px; border: 0.5px solid grey")
@@ -180,10 +183,19 @@ class ChatBox(QtWidgets.QWidget):
     def add_message(self, message_item: MessageType):
         message = Message(message=message_item)
         message.reply_clicked.connect(self.open_reply)
+        message.message_highlight.connect(self.highlight_message)
         self.messages_container.addWidget(message)
         QTimer.singleShot(50, self.scroll_to_bottom)
 
         return message
+
+    def highlight_message(self, message_id: str):
+        print("ID: ", message_id)
+        for index in range(self.messages_container.count()):
+            item = self.messages_container.itemAt(index)
+            if item and item.widget() and item.widget().message_type.id == message_id:
+                self.scroll_area.ensureWidgetVisible(item.widget())
+                item.widget().highlight()
 
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
@@ -196,8 +208,12 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
-            message_type = MessageType(text=text, sender="me", time="now")
+            message_type = MessageType(
+                id=random.randint(1, 1000), text=text, sender="me", time="now", reply_to=self.reply_to_message
+            )
             self.add_message(message_type)
+            if self.reply_opened:
+                self.close_reply()
             if self.chat:
                 for chat in CHAT_LIST:
                     if chat.id == self.chat.id:
@@ -237,9 +253,11 @@ class ChatBox(QtWidgets.QWidget):
         self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)  # Smooth animation curve
         self.animation.start()
         self.reply_opened = False
+        self.reply_to_message = None
 
     def open_reply(self, message: MessageType):
         index = int(self.reply_to_text.width() / 5.8)
+        self.reply_to_message = message
         self.reply_to_text.setText(message.text[:index])
         if not self.reply_opened:
             self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")

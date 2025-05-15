@@ -4,10 +4,11 @@ from typing import List, Optional
 
 @dataclass
 class MessageType:
+    id: int
     text: str
     sender: str
     time: str
-    reply_to: Optional[str] = None
+    reply_to: Optional["MessageType"] = None
 
 
 @dataclass

@@ -7,9 +7,9 @@ import sys
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
-from components.chat_list import ChatList
-from components.chatbox import ChatBox
-from components.sidebar import Sidebar
+from components.main.chat_list import ChatList
+from components.main.chatbox import ChatBox
+from components.main.sidebar import Sidebar
 from data import CHAT_LIST
 
 

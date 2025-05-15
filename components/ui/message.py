@@ -1,13 +1,88 @@
 import qtawesome as qta
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QPoint, QRect, Qt, Signal
+from PySide6.QtGui import QColor
 
 from chat_types import MessageType
 from styles import context_menu_style, reply_to_label_style
 
 
-class Message(QtWidgets.QWidget):
+class HighlightableWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self._base_color = QColor(0, 0, 0, 0)
+        self._current_color = QColor(self._base_color)
+
+        self.setAutoFillBackground(True)
+        self._update_stylesheet()
+
+        self._animation = QtCore.QPropertyAnimation(self, b"highlight_color")
+        self._animation.setEasingCurve(QtCore.QEasingCurve.InOutCubic)
+
+    def _update_stylesheet(self):
+        """Update the widget's stylesheet with the current color"""
+        self.setStyleSheet(
+            f"border-radius: 20px;"
+            f"background-color: rgba({self._current_color.red()}, "
+            f"{self._current_color.green()}, {self._current_color.blue()}, "
+            f"{self._current_color.alpha() / 255.0});"
+        )
+
+    def get_highlight_color(self):
+        return self._current_color
+
+    def set_highlight_color(self, color):
+        self._current_color = color
+        self._update_stylesheet()
+
+    highlight_color = QtCore.Property(QColor, get_highlight_color, set_highlight_color)
+
+    def set_base_color(self, color):
+        """Set the widget's base color"""
+        if isinstance(color, str) and color.lower() == "transparent":
+            self._base_color = QColor(0, 0, 0, 0)
+        else:
+            self._base_color = color if isinstance(color, QColor) else QColor(color)
+
+        self._current_color = QColor(self._base_color)
+        self._update_stylesheet()
+
+    def highlight(self, duration=600, highlight_color=None):
+        """
+        Highlight the widget with an animation
+
+        Args:
+            duration: The total animation duration in milliseconds
+            highlight_color: The color to transition to (defaults to semi-transparent dark gray)
+        """
+        if self._animation.state() == QtCore.QPropertyAnimation.Running:
+            self._animation.stop()
+
+        if highlight_color is None:
+            highlight_color = QColor(201, 100, 66, 100)
+
+        self._animation.setDuration(duration // 2)  # Half duration for highlighting
+        self._animation.setStartValue(self._current_color)
+        self._animation.setEndValue(highlight_color)
+
+        self.second_animation = QtCore.QPropertyAnimation(self, b"highlight_color")
+        self.second_animation.setEasingCurve(QtCore.QEasingCurve.InOutCubic)
+        self.second_animation.setDuration(duration // 2)
+        self.second_animation.setStartValue(highlight_color)
+        self.second_animation.setEndValue(self._base_color)
+
+        self._animation.finished.connect(lambda: QtCore.QTimer.singleShot(1000, self.start_close_animation))
+
+        self._animation.start()
+
+    def start_close_animation(self):
+        self.second_animation.start()
+
+
+class Message(HighlightableWidget):
     reply_clicked = Signal(MessageType)
+    message_highlight = Signal(int)
 
     def __init__(self, message: MessageType):
         super().__init__()
@@ -18,6 +93,7 @@ class Message(QtWidgets.QWidget):
         self.is_mine = message.sender == "me"
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setStyleSheet("border-radius: 20px")
         # self.setContentsMargins(0, 0, 0, 0)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -43,12 +119,13 @@ class Message(QtWidgets.QWidget):
         self.message_layout.setSpacing(0)
 
         if message.reply_to:
-            self.reply_to_label = QtWidgets.QPushButton(f" {message.reply_to[:100]}")
+            self.reply_to_label = QtWidgets.QPushButton(f" {message.reply_to.text[:100]}")
             self.reply_to_label.setMaximumHeight(80)
             self.reply_to_label.setObjectName("reply_to_label")
             self.reply_to_label.setStyleSheet(reply_to_label_style)
             self.reply_to_label.setContentsMargins(0, 0, 0, 0)
             self.reply_to_label.setCursor(Qt.PointingHandCursor)
+            self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id))
             self.message_layout.addWidget(self.reply_to_label)
 
         self.text = QtWidgets.QLabel(self.message)

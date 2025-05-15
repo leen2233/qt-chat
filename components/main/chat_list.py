@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, Signal
 from qtpy.QtWidgets import QWidgetAction
 
 from chat_types import ChatType
-from components.rounded_avatar import RoundedAvatar
+from components.ui.rounded_avatar import RoundedAvatar
 from styles import context_menu_style
 
 

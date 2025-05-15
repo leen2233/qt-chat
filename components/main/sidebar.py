@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
 
 from chat_types import ChatType
-from components.rounded_avatar import RoundedAvatar
+from components.ui.rounded_avatar import RoundedAvatar
 
 
 class Divider(QtWidgets.QWidget):
