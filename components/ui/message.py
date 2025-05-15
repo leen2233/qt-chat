@@ -92,6 +92,8 @@ class Message(HighlightableWidget):
         self.time = message.time
         self.is_mine = message.sender == "me"
 
+        self.set_width = False
+
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
         self.setStyleSheet("border-radius: 20px")
         # self.setContentsMargins(0, 0, 0, 0)
@@ -101,7 +103,7 @@ class Message(HighlightableWidget):
 
         self.message_box = QtWidgets.QWidget()
         self.message_box.setMinimumWidth(10)
-        self.message_box.setMaximumWidth(600)  # Maximum width for any message
+        self.message_box.setMaximumWidth(570)  # Maximum width for any message
 
         if self.is_mine:
             self.message_box.setStyleSheet(
@@ -128,51 +130,37 @@ class Message(HighlightableWidget):
             self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id))
             self.message_layout.addWidget(self.reply_to_label)
 
+        self.text_and_time_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.TopToBottom)
+
         self.text = QtWidgets.QLabel(self.message)
-        self.text.setMaximumWidth(600)
         self.text.setWordWrap(True)
-        # self.text.setStyleSheet("padding: 10px")
-        # self.text.setContentsMargins(0, 0, 0, -10)
-        # self.text.setWordWrap(True)
 
         self.time_label = QtWidgets.QLabel(self.time)
         self.time_label.setStyleSheet("font-size: 10px; color: grey;")
         self.time_label.setAlignment(Qt.AlignRight)
-        self.time_label.setContentsMargins(0, -10, 0, 0)
+        self.time_label.setContentsMargins(0, 0, 0, 0)
 
-        self.message_layout.addWidget(self.text)
-        self.message_layout.addWidget(self.time_label)
+        self.text_and_time_layout.addWidget(self.text)
+        self.text_and_time_layout.addWidget(self.time_label)
+
+        self.message_layout.addLayout(self.text_and_time_layout)
 
         self.main_layout.addWidget(self.message_box)
-
-    #     self.adjust_width_to_text()
-
-    # def adjust_width_to_text(self):
-    #     font_metrics = QtGui.QFontMetrics(self.text.font())
-
-    #     lines = self.message.split("\n")
-    #     widest_line_width = 0
-
-    #     for line in lines:
-    #         line_width = font_metrics.horizontalAdvance(line)
-    #         widest_line_width = max(widest_line_width, line_width)
-
-    #     padding = 60
-    #     time_width = font_metrics.horizontalAdvance(self.time)
-
-    #     desired_width = min(max(widest_line_width, time_width) + padding, 400)
-
-    #     self.message_box.setMinimumWidth(min(desired_width, 100))
-
-    #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-    #     self.message_box.setSizePolicy(size_policy)
-
-    #     self.message_box.adjustSize()
 
     def mouseDoubleClickEvent(self, event):
         self.reply_clicked.emit(self.message_type)
 
     def paintEvent(self, event):
+        if not self.set_width:
+            print("setting width")
+            if self.text.width() < 530:
+                print(self.text.text()[:30], self.width(), self.text.width())
+                self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
+                self.time_label.setContentsMargins(0, 13, 10, 0)
+            else:
+                self.time_label.setContentsMargins(0, 0, 10, 10)
+            self.set_width = True
+
         painter = QtGui.QPainter(self)
         # Create a path for the bubble with tail
         path = QtGui.QPainterPath()
@@ -211,12 +199,8 @@ class Message(HighlightableWidget):
         else:
             painter.setBrush("#30302e")
         painter.drawPath(path)
-        self.setMinimumHeight(self.text.height() + 45)
 
     def contextMenuEvent(self, event):
-        # self.setStyleSheet(
-        #     "QWidget { background-color: white; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px}"
-        # )
         context_menu = QtWidgets.QMenu(self)
         reply_action = context_menu.addAction(qta.icon("mdi.reply-outline", color="white"), "Reply")
         select_action = context_menu.addAction(qta.icon("mdi.selection-ellipse-arrow-inside", color="white"), "Select")

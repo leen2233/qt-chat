@@ -76,7 +76,7 @@ class ChatBox(QtWidgets.QWidget):
 
         self.more_button = QtWidgets.QPushButton(qta.icon("mdi.dots-vertical", color="white"), "")
         self.more_button.setCursor(QtCore.Qt.PointingHandCursor)
-        self.more_button.setStyleSheet("background-color: transparent; border: none;")
+        self.more_button.setStyleSheet("background-color: transparent; border: none; padding-right: 15px")
         self.more_button.setIconSize(QSize(25, 25))
 
         self.header_layout.addWidget(self.avatar)
@@ -180,7 +180,7 @@ class ChatBox(QtWidgets.QWidget):
         new_height = min(max(doc_height + 10, 50), 150)  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
-    def add_message(self, message_item: MessageType):
+    def add_message(self, message_item: MessageType, next=None, previous=None):
         message = Message(message=message_item)
         message.reply_clicked.connect(self.open_reply)
         message.message_highlight.connect(self.highlight_message)
@@ -196,6 +196,7 @@ class ChatBox(QtWidgets.QWidget):
             if item and item.widget() and item.widget().message_type.id == message_id:
                 self.scroll_area.ensureWidgetVisible(item.widget())
                 item.widget().highlight()
+        self.chat_input.setFocus(Qt.MouseFocusReason)
 
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
@@ -235,6 +236,7 @@ class ChatBox(QtWidgets.QWidget):
         self.username.setText(chat.name)
         self.last_seen.setText(chat.time)
         self.chat = chat
+        self.chat_input.setFocus(Qt.MouseFocusReason)
 
     def sidebar_toggle(self):
         self.sidebar_button.setIcon(
@@ -244,6 +246,7 @@ class ChatBox(QtWidgets.QWidget):
         )
         self.sidebar_toggled = not self.sidebar_toggled
         self.sidebar_toggled_signal.emit(self.sidebar_toggled)
+        self.chat_input.setFocus(Qt.MouseFocusReason)
 
     def close_reply(self):
         self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
@@ -259,6 +262,7 @@ class ChatBox(QtWidgets.QWidget):
         index = int(self.reply_to_text.width() / 5.8)
         self.reply_to_message = message
         self.reply_to_text.setText(message.text[:index])
+        self.chat_input.setFocus(Qt.MouseFocusReason)
         if not self.reply_opened:
             self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
             self.animation.setDuration(200)  # Animation duration in milliseconds

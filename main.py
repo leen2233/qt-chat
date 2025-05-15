@@ -49,7 +49,10 @@ class ChatApp(QtWidgets.QMainWindow):
 
         self.splitter.addWidget(self.chat_list)
         self.splitter.addWidget(self.chat_area)
+        self.splitter.setSizes([250, 750])
         self.main_layout.addWidget(self.splitter)
+
+        self.chat_area.chat_input.setFocus(Qt.MouseFocusReason)
         # Window settings
         self.resize(1000, 600)
 
@@ -100,7 +103,7 @@ class ChatApp(QtWidgets.QMainWindow):
         if state is True:
             self.sidebar = Sidebar(self.selected_chat)
             self.sidebar.sidebar_closed.connect(self.sidebar_closed)
-            self.main_layout.addWidget(self.sidebar)
+            self.splitter.addWidget(self.sidebar)
             self.sidebar_opened = True
         else:
             self.sidebar_opened = False

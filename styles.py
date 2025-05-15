@@ -44,6 +44,7 @@ reply_to_label_style = """
         color: white;
         background-color: #4c4c4b;
         margin: 10px;
+        margin-bottom: 0px;
         border-left: 3px solid #686867;
         border-radius: 5px;
     }
