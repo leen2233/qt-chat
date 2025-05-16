@@ -101,7 +101,11 @@ class Sidebar(QtWidgets.QWidget):
         self.name = QtWidgets.QLabel(chat.name if chat else "")
         self.name.setStyleSheet("font-size: 20px; color: white;")
         self.time = QtWidgets.QLabel(chat.time if chat else "")
-        self.time.setStyleSheet("font-size: 14px; color: grey;")
+        if chat:
+            if chat.time == "online":
+                self.time.setStyleSheet("color: #c96442; font-size: 14px")
+            else:
+                self.time.setStyleSheet("color: grey; font-size: 14px")
         username_time_layout.addWidget(self.name)
         username_time_layout.addWidget(self.time)
 
@@ -187,6 +191,12 @@ class Sidebar(QtWidgets.QWidget):
         self.avatar.change_source(chat.avatar)
         self.name.setText(chat.name)
         self.time.setText(chat.time)
+
+        if chat.time == "online":
+            self.time.setStyleSheet("color: #c96442; font-size: 14px")
+        else:
+            self.time.setStyleSheet("color: grey; font-size: 14px")
+
         self.phone_number.setText(chat.phone_number)
         self.username.setText("@" + chat.username)
         while self.stats.count() > 0:

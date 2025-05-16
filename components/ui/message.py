@@ -92,6 +92,8 @@ class Message(HighlightableWidget):
         self.time = message.time
         self.is_mine = message.sender == "me"
 
+        self.status = message.status
+
         self.set_width = False
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
@@ -135,13 +137,39 @@ class Message(HighlightableWidget):
         self.text = QtWidgets.QLabel(self.message)
         self.text.setWordWrap(True)
 
+        self.time_status_layout = QtWidgets.QHBoxLayout()
+        self.time_status_layout.setAlignment(Qt.AlignRight)
+        self.time_status_layout.setSpacing(0)
+        self.time_status_layout.setContentsMargins(0, 0, 0, 0)
+
         self.time_label = QtWidgets.QLabel(self.time)
-        self.time_label.setStyleSheet("font-size: 10px; color: grey;")
+        self.time_label.setStyleSheet("font-size: 10px; color: grey; ")
         self.time_label.setAlignment(Qt.AlignRight)
-        self.time_label.setContentsMargins(0, 0, 0, 0)
+        self.time_label.setContentsMargins(0, 0, -8, 0)
+
+        self.time_status_layout.addWidget(self.time_label)
+
+        if self.author == "me":
+            self.status = QtWidgets.QLabel()
+            if self.message_type.status == MessageType.Status.SENDING:
+                icon = qta.icon("mdi.clock-outline", color="#c96442")
+                pixmap = icon.pixmap(18, 18)
+            elif self.message_type.status == MessageType.Status.SENT:
+                icon = qta.icon("mdi.check", color="#c96442")
+                pixmap = icon.pixmap(20, 20)
+            elif self.message_type.status == MessageType.Status.READ:
+                icon = qta.icon("mdi.check-all", color="#c96442")
+                pixmap = icon.pixmap(20, 20)
+            self.status.setPixmap(pixmap)
+            self.status.setFixedWidth(20)
+            self.status.setStyleSheet("padding: 0px; margin: 0px;")
+            # self.status.setAlignment(Qt.AlignRight)
+            self.status.setContentsMargins(0, 0, 0, 0)
+
+            self.time_status_layout.addWidget(self.status)
 
         self.text_and_time_layout.addWidget(self.text)
-        self.text_and_time_layout.addWidget(self.time_label)
+        self.text_and_time_layout.addLayout(self.time_status_layout)
 
         self.message_layout.addLayout(self.text_and_time_layout)
 
@@ -156,9 +184,9 @@ class Message(HighlightableWidget):
             if self.text.width() < 530:
                 print(self.text.text()[:30], self.width(), self.text.width())
                 self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
-                self.time_label.setContentsMargins(0, 13, 10, 0)
+                self.time_status_layout.setContentsMargins(0, 13, 10, 0)
             else:
-                self.time_label.setContentsMargins(0, 0, 10, 10)
+                self.time_status_layout.setContentsMargins(0, 0, 10, 10)
             self.set_width = True
 
         painter = QtGui.QPainter(self)

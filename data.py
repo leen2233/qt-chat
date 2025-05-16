@@ -6,12 +6,12 @@ CHAT_LIST = [
         avatar="https://fastly.picsum.photos/id/689/200/200.jpg?hmac=2KHWG2UlfLNAWC1jiBz-LQ7b-TMOB4bcW-FVvdQ_7a4",
         name="John Doe",
         last_message="Hello!",
-        time="3 min ago",
+        time="online",
         phone_number="+99361234567",
         username="john244",
         stats=StatType(photos=10, videos=2, files=360, links=231, voices=2),
         messages=[
-            MessageType(id=1, text="Hi there!", sender="me", time="10:00 AM"),
+            MessageType(id=1, text="Hi there!", sender="me", time="10:00 AM", status=MessageType.Status.READ),
             MessageType(
                 id=2,
                 text="Hello!",
@@ -107,6 +107,7 @@ CHAT_LIST = [
             """,
                 sender="me",
                 time="10:05 AM",
+                status=MessageType.Status.READ,
             ),
             MessageType(id=4, text="Pretty good, you?", sender="another", time="10:06 AM"),
             MessageType(id=5, text="Same here!", sender="me", time="10:07 AM"),
@@ -120,6 +121,13 @@ CHAT_LIST = [
                 id=6,
                 text="""But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?""",
                 sender="another",
+                time="10:07 AM",
+            ),
+            MessageType(
+                id=7,
+                text="cool",
+                sender="me",
+                status=MessageType.Status.SENT,
                 time="10:07 AM",
             ),
             MessageType(
