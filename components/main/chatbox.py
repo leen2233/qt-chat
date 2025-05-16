@@ -115,6 +115,7 @@ class ChatBox(QtWidgets.QWidget):
         self.messages_container = QtWidgets.QVBoxLayout(self.messages_widget)
         self.messages_container.setAlignment(Qt.AlignBottom)
         self.messages_container.setContentsMargins(0, 0, 0, 20)
+        self.messages_container.setSpacing(0)
         self.messages_container.addStretch()
 
         self.scroll_area.setWidget(self.messages_widget)
@@ -181,16 +182,15 @@ class ChatBox(QtWidgets.QWidget):
         self.chat_input.setFixedHeight(new_height)
 
     def add_message(self, message_item: MessageType, next=None, previous=None):
-        message = Message(message=message_item)
+        message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.message_highlight.connect(self.highlight_message)
         self.messages_container.addWidget(message)
-        QTimer.singleShot(50, self.scroll_to_bottom)
+        QTimer.singleShot(10, self.scroll_to_bottom)
 
         return message
 
     def highlight_message(self, message_id: str):
-        print("ID: ", message_id)
         for index in range(self.messages_container.count()):
             item = self.messages_container.itemAt(index)
             if item and item.widget() and item.widget().message_type.id == message_id:
@@ -209,17 +209,26 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
+            previous_message = None
             message_type = MessageType(
                 id=random.randint(1, 1000), text=text, sender="me", time="now", reply_to=self.reply_to_message
             )
-            self.add_message(message_type)
             if self.reply_opened:
                 self.close_reply()
             if self.chat:
                 for chat in CHAT_LIST:
                     if chat.id == self.chat.id:
+                        previous_message = chat.messages[-1] if chat.messages else None
                         chat.messages.append(message_type)
                         break
+
+            if previous_message:
+                for index in range(self.messages_container.count()):
+                    item = self.messages_container.itemAt(index)
+                    if item and item.widget() and item.widget().message_type.id == previous_message.id:
+                        self.scroll_area.ensureWidgetVisible(item.widget())
+                        item.widget().update_previous_next(next="me")
+            self.add_message(message_type, previous=previous_message.sender)
             self.chat_input.setText("")
 
     def load_messages(self, messages: List[MessageType]):
@@ -228,8 +237,14 @@ class ChatBox(QtWidgets.QWidget):
             if item.widget():  # Check if item has a widget
                 item.widget().deleteLater()
             self.messages_container.removeItem(item)
-        for message in messages:
-            self.add_message(message)
+        for index, message in enumerate(messages):
+            previous = None
+            next = None
+            if index != 0:
+                next = messages[index - 1].sender
+            if index < len(messages) - 1:
+                previous = messages[index + 1].sender
+            self.add_message(message, previous, next)
 
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.avatar)

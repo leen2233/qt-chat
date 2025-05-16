@@ -92,7 +92,6 @@ class ChatApp(QtWidgets.QMainWindow):
                 self.chat_area.load_messages(chat.messages)
                 self.chat_area.change_chat_user(chat)
                 if self.sidebar_opened:
-                    print("PRint sidebar opened")
                     self.sidebar.change_chat(chat)
 
     def sidebar_closed(self, state):

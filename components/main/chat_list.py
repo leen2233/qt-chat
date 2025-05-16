@@ -122,7 +122,6 @@ class ChatItem(QtWidgets.QWidget):
 
         context_menu.setStyleSheet(context_menu_style)
         action = context_menu.exec_(event.globalPos())
-        print(action)
 
     def set_active(self, active):
         """Set this item as active/inactive"""

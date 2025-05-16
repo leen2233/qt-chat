@@ -84,7 +84,7 @@ class Message(HighlightableWidget):
     reply_clicked = Signal(MessageType)
     message_highlight = Signal(int)
 
-    def __init__(self, message: MessageType):
+    def __init__(self, message: MessageType, previous, next):
         super().__init__()
         self.message_type = message
         self.message = message.text
@@ -92,15 +92,21 @@ class Message(HighlightableWidget):
         self.time = message.time
         self.is_mine = message.sender == "me"
 
+        self.previous = self.author == previous
+        self.next = self.author == next
+
         self.status = message.status
 
         self.set_width = False
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
-        self.setStyleSheet("border-radius: 20px")
+        self.setStyleSheet("border-radius: 20px; padding: 0px; margin: 0px")
         # self.setContentsMargins(0, 0, 0, 0)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
+        top_margin = 2 if self.previous else 10
+        bottom_margin = 2 if self.next else 10
+        self.main_layout.setContentsMargins(0, top_margin, 0, bottom_margin)
         # self.main_layout.setContentsMargins(10, 5, 10, 5)
 
         self.message_box = QtWidgets.QWidget()
@@ -178,11 +184,18 @@ class Message(HighlightableWidget):
     def mouseDoubleClickEvent(self, event):
         self.reply_clicked.emit(self.message_type)
 
+    def update_previous_next(self, previous=None, next=None):
+        if previous:
+            self.previous = previous
+        if next:
+            self.next = next
+        top_margin = 2 if self.previous else 10
+        bottom_margin = 2 if self.next else 10
+        self.main_layout.setContentsMargins(0, top_margin, 0, bottom_margin)
+
     def paintEvent(self, event):
         if not self.set_width:
-            print("setting width")
             if self.text.width() < 530:
-                print(self.text.text()[:30], self.width(), self.text.width())
                 self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
                 self.time_status_layout.setContentsMargins(0, 13, 10, 0)
             else:
@@ -195,10 +208,6 @@ class Message(HighlightableWidget):
         rect = self.rect()
 
         bubble_rect = QRect(rect)
-
-        # Adjust rectangle to account for tail
-        tail_width = 10
-        tail_height = 15
 
         if self.is_mine:
             tail_points = [
