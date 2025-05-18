@@ -10,7 +10,7 @@ class TypingIndicator(QtWidgets.QWidget):
         self.message_box.setMinimumWidth(80)
         self.message_box.setMaximumWidth(600)  # Maximum width for any message
         self.message_box.setStyleSheet("background-color: #30302e; border-radius: 10px; padding: 10px")
-        self.main_layout.setAlignment(Qt.AlignLeft)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_layout = QtWidgets.QVBoxLayout(self.message_box)
         self.message_layout.setContentsMargins(0, 0, 0, 0)
         self.message_layout.setSpacing(0)

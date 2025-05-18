@@ -13,7 +13,7 @@ class Divider(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setFixedHeight(8)
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("border-radius: 4px; background-color: #262624;")
 
 
@@ -21,14 +21,14 @@ class StatItem(QtWidgets.QWidget):
     def __init__(self, icon_name, text, on_click, color="white"):
         super().__init__()
         self.setFixedHeight(45)
-        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.on_click = on_click
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
-        self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.setContentsMargins(20, 0, 10, 0)
-        self.layout.setAlignment(Qt.AlignLeft)
-        self.layout.setSpacing(25)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
+        self.main_layout = QtWidgets.QHBoxLayout(self)
+        self.main_layout.setContentsMargins(20, 0, 10, 0)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.main_layout.setSpacing(25)
 
         self.hover_color = "#333333"
         self.normal_color = "transparent"
@@ -37,8 +37,8 @@ class StatItem(QtWidgets.QWidget):
         self.icon.setPixmap(qta.icon(icon_name, color=color).pixmap(24, 24))
         self.text = QtWidgets.QLabel(text)
         self.text.setStyleSheet(f"color: {color}; font-size: 14px")
-        self.layout.addWidget(self.icon)
-        self.layout.addWidget(self.text)
+        self.main_layout.addWidget(self.icon)
+        self.main_layout.addWidget(self.text)
 
     def update_background(self, color):
         """Update the background color using palette"""
@@ -67,12 +67,12 @@ class Sidebar(QtWidgets.QWidget):
         self.setMinimumWidth(300)
         self.setMaximumWidth(500)
         self.setObjectName("sidebar")
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""#sidebar {background-color: #1f1e1d;border-radius: 14px;}""")
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(Qt.AlignTop)
-        self.layout.setContentsMargins(20, 20, 20, 20)
-        self.layout.setSpacing(20)
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.main_layout.setContentsMargins(20, 20, 20, 20)
+        self.main_layout.setSpacing(20)
 
         header_layout = QtWidgets.QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -83,19 +83,19 @@ class Sidebar(QtWidgets.QWidget):
         close_button.setIconSize(QtCore.QSize(30, 30))
         close_button.setStyleSheet("background: transparent; border: none;")
         close_button.clicked.connect(self.close)
-        close_button.setCursor(QtCore.Qt.PointingHandCursor)
+        close_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         header_layout.addWidget(info)
         header_layout.addStretch()
         header_layout.addWidget(close_button)
 
         user_info_layout = QtWidgets.QHBoxLayout()
         user_info_layout.setContentsMargins(0, 0, 0, 0)
-        user_info_layout.setAlignment(Qt.AlignLeft)
+        user_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         user_info_layout.setSpacing(10)
 
         username_time_layout = QtWidgets.QVBoxLayout()
         username_time_layout.setContentsMargins(0, 0, 0, 0)
-        username_time_layout.setAlignment(Qt.AlignLeft)
+        username_time_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_time_layout.setSpacing(0)
 
         self.name = QtWidgets.QLabel(chat.name if chat else "")
@@ -115,7 +115,7 @@ class Sidebar(QtWidgets.QWidget):
 
         phone_info_layout = QtWidgets.QHBoxLayout()
         phone_info_layout.setContentsMargins(10, 0, 0, 0)
-        phone_info_layout.setAlignment(Qt.AlignLeft)
+        phone_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         phone_info_layout.setSpacing(20)
         icon = QtWidgets.QLabel()
         icon.setPixmap(qta.icon("ri.contacts-book-2-fill", color="white").pixmap(40, 40))
@@ -123,7 +123,7 @@ class Sidebar(QtWidgets.QWidget):
         phone_number_description_layout.setSpacing(0)
         self.phone_number = QtWidgets.QLabel(chat.phone_number if chat else "")
         self.phone_number.setStyleSheet("font-size: 14px; color: white")
-        self.phone_number.setCursor(QCursor(Qt.PointingHandCursor))
+        self.phone_number.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         description = QtWidgets.QLabel("Mobile")
         description.setStyleSheet("font-size: 10px; color: grey")
         phone_number_description_layout.addWidget(self.phone_number)
@@ -134,14 +134,14 @@ class Sidebar(QtWidgets.QWidget):
 
         username_info_layout = QtWidgets.QHBoxLayout()
         username_info_layout.setContentsMargins(10, 0, 0, 0)
-        username_info_layout.setAlignment(Qt.AlignLeft)
+        username_info_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_info_layout.setSpacing(20)
         icon = QtWidgets.QLabel()
         icon.setPixmap(qta.icon("mdi6.information-outline", color="white").pixmap(40, 40))
         username_description_layout = QtWidgets.QVBoxLayout()
         username_description_layout.setSpacing(0)
         self.username = QtWidgets.QLabel("@" + chat.username if chat else "")
-        self.username.setCursor(QCursor(Qt.PointingHandCursor))
+        self.username.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.username.setStyleSheet("font-size: 14px; color: #c96442")
         description = QtWidgets.QLabel("Username")
         description.setStyleSheet("font-size: 10px; color: grey")
@@ -174,15 +174,15 @@ class Sidebar(QtWidgets.QWidget):
         actions.addWidget(StatItem("mdi.delete", "Delete this contact", None))
         actions.addWidget(StatItem("mdi.block-helper", "Block this user", None, color="red"))
 
-        self.layout.addLayout(header_layout)
-        self.layout.addLayout(user_info_layout)
-        self.layout.addWidget(Divider())
-        self.layout.addLayout(phone_info_layout)
-        self.layout.addLayout(username_info_layout)
-        self.layout.addWidget(Divider())
-        self.layout.addLayout(self.stats)
-        self.layout.addWidget(Divider())
-        self.layout.addLayout(actions)
+        self.main_layout.addLayout(header_layout)
+        self.main_layout.addLayout(user_info_layout)
+        self.main_layout.addWidget(Divider())
+        self.main_layout.addLayout(phone_info_layout)
+        self.main_layout.addLayout(username_info_layout)
+        self.main_layout.addWidget(Divider())
+        self.main_layout.addLayout(self.stats)
+        self.main_layout.addWidget(Divider())
+        self.main_layout.addLayout(actions)
 
         self.setFixedWidth(0)
         QtCore.QTimer.singleShot(0, self.show_animation)
@@ -215,16 +215,17 @@ class Sidebar(QtWidgets.QWidget):
         if chat.stats.voices:
             self.stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
 
-    def close(self):
+    def close(self) -> bool:
         self.sidebar_closed.emit("closed")
         self.hide_animation(self.deleteLater)
+        return True
 
     def show_animation(self):
         self.animation = QtCore.QPropertyAnimation(self, b"minimumWidth")
         self.animation.setDuration(200)  # Animation duration in milliseconds
         self.animation.setStartValue(0)
         self.animation.setEndValue(300)  # Final width
-        self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)  # Smooth animation curve
+        self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
         self.animation.start()
 
     def hide_animation(self, on_finished):
@@ -232,7 +233,7 @@ class Sidebar(QtWidgets.QWidget):
         self.animation.setDuration(200)
         self.animation.setStartValue(300)
         self.animation.setEndValue(0)
-        self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+        self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)
 
         # Connect finished signal if callback provided
         if on_finished:

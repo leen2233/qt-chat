@@ -30,14 +30,14 @@ class ChatBox(QtWidgets.QWidget):
         self.setStyleSheet("""
             QWidget { background-color: #262624; color: #ffffff; }
         """)
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 0, 0, 0)
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 0, 0, 0)
 
         self.header_widget = QtWidgets.QWidget()
         self.header_widget.setFixedHeight(60)
         self.header_widget.setStyleSheet("background-color: #1f1e1d; border-radius: 14px")
         self.header_layout = QtWidgets.QHBoxLayout(self.header_widget)
-        self.header_layout.setAlignment(Qt.AlignJustify)
+        self.header_layout.setAlignment(Qt.AlignmentFlag.AlignJustify)
         self.header_layout.setContentsMargins(10, 0, 0, 0)
 
         self.avatar = RoundedAvatar(
@@ -54,28 +54,28 @@ class ChatBox(QtWidgets.QWidget):
         self.username_last_seen_layout = QtWidgets.QVBoxLayout()
         self.username_last_seen_layout.setSpacing(0)
         self.username_last_seen_layout.setContentsMargins(0, 0, 0, 0)
-        self.username_last_seen_layout.setAlignment(Qt.AlignVCenter)
+        self.username_last_seen_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.username_last_seen_layout.addWidget(self.username)
         self.username_last_seen_layout.addWidget(self.last_seen)
 
         self.search_button = QtWidgets.QPushButton(qta.icon("fa5s.search", color="white"), "")
-        self.search_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.search_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.search_button.setStyleSheet("background-color: transparent; border: none;")
         self.search_button.setIconSize(QSize(20, 20))
 
         self.call_button = QtWidgets.QPushButton(qta.icon("fa5s.phone-alt", color="white"), "")
-        self.call_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.call_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.call_button.setStyleSheet("background-color: transparent; border: none;")
         self.call_button.setIconSize(QSize(20, 20))
 
         self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color="white"), "")
-        self.sidebar_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.sidebar_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.sidebar_button.setStyleSheet("background-color: transparent; border: none;")
         self.sidebar_button.setIconSize(QSize(25, 25))
         self.sidebar_button.clicked.connect(self.sidebar_toggle)
 
         self.more_button = QtWidgets.QPushButton(qta.icon("mdi.dots-vertical", color="white"), "")
-        self.more_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.more_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.more_button.setStyleSheet("background-color: transparent; border: none; padding-right: 15px")
         self.more_button.setIconSize(QSize(25, 25))
 
@@ -108,12 +108,12 @@ class ChatBox(QtWidgets.QWidget):
             }
             """)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.scroll_area.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         # Container for messages
         self.messages_widget = QtWidgets.QWidget()
         self.messages_container = QtWidgets.QVBoxLayout(self.messages_widget)
-        self.messages_container.setAlignment(Qt.AlignBottom)
+        self.messages_container.setAlignment(Qt.AlignmentFlag.AlignBottom)
         self.messages_container.setContentsMargins(0, 0, 0, 20)
         self.messages_container.setSpacing(0)
         self.messages_container.addStretch()
@@ -172,13 +172,13 @@ class ChatBox(QtWidgets.QWidget):
         )
 
         # Add components to main layout
-        self.layout.addWidget(self.header_widget)
-        self.layout.addWidget(self.scroll_area)
-        self.layout.addLayout(self.input_part)
+        self.main_layout.addWidget(self.header_widget)
+        self.main_layout.addWidget(self.scroll_area)
+        self.main_layout.addLayout(self.input_part)
 
     def adjust_input_height(self):
         doc_height = self.chat_input.document().size().height()
-        new_height = min(max(doc_height + 10, 50), 150)  # Adjust between min and max
+        new_height = int(min(max(doc_height + 10, 50), 150))  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
     def add_message(self, message_item: MessageType, next=None, previous=None):
@@ -196,7 +196,7 @@ class ChatBox(QtWidgets.QWidget):
             if item and item.widget() and item.widget().message_type.id == message_id:
                 self.scroll_area.ensureWidgetVisible(item.widget())
                 item.widget().highlight()
-        self.chat_input.setFocus(Qt.MouseFocusReason)
+        self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
@@ -228,7 +228,8 @@ class ChatBox(QtWidgets.QWidget):
                     if item and item.widget() and item.widget().message_type.id == previous_message.id:
                         self.scroll_area.ensureWidgetVisible(item.widget())
                         item.widget().update_previous_next(next="me")
-            self.add_message(message_type, previous=previous_message.sender)
+            sender = previous_message.sender if previous_message else None
+            self.add_message(message_type, previous=sender)
             self.chat_input.setText("")
 
     def load_messages(self, messages: List[MessageType]):
@@ -246,6 +247,8 @@ class ChatBox(QtWidgets.QWidget):
                 previous = messages[index + 1].sender
             self.add_message(message, previous, next)
 
+        QTimer.singleShot(100, self.scroll_to_bottom)
+
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.avatar)
         self.username.setText(chat.name)
@@ -255,7 +258,7 @@ class ChatBox(QtWidgets.QWidget):
         else:
             self.last_seen.setStyleSheet("color: grey; font-size: 14px")
         self.chat = chat
-        self.chat_input.setFocus(Qt.MouseFocusReason)
+        self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def sidebar_toggle(self):
         self.sidebar_button.setIcon(
@@ -265,14 +268,14 @@ class ChatBox(QtWidgets.QWidget):
         )
         self.sidebar_toggled = not self.sidebar_toggled
         self.sidebar_toggled_signal.emit(self.sidebar_toggled)
-        self.chat_input.setFocus(Qt.MouseFocusReason)
+        self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def close_reply(self):
         self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
         self.animation.setDuration(200)  # Animation duration in milliseconds
         self.animation.setStartValue(35)
         self.animation.setEndValue(0)  # Final width
-        self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)  # Smooth animation curve
+        self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
         self.animation.start()
         self.reply_opened = False
         self.reply_to_message = None
@@ -281,12 +284,12 @@ class ChatBox(QtWidgets.QWidget):
         index = int(self.reply_to_text.width() / 5.8)
         self.reply_to_message = message
         self.reply_to_text.setText(message.text[:index])
-        self.chat_input.setFocus(Qt.MouseFocusReason)
+        self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
         if not self.reply_opened:
             self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
             self.animation.setDuration(200)  # Animation duration in milliseconds
             self.animation.setStartValue(0)
             self.animation.setEndValue(35)  # Final width
-            self.animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)  # Smooth animation curve
+            self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
             self.animation.start()
             self.reply_opened = True

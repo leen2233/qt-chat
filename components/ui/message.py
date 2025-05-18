@@ -56,7 +56,7 @@ class HighlightableWidget(QtWidgets.QWidget):
             duration: The total animation duration in milliseconds
             highlight_color: The color to transition to (defaults to semi-transparent dark gray)
         """
-        if self._animation.state() == QtCore.QPropertyAnimation.Running:
+        if self._animation.state() == QtCore.QAbstractAnimation.State.Running:
             self._animation.stop()
 
         if highlight_color is None:
@@ -67,7 +67,7 @@ class HighlightableWidget(QtWidgets.QWidget):
         self._animation.setEndValue(highlight_color)
 
         self.second_animation = QtCore.QPropertyAnimation(self, b"highlight_color")
-        self.second_animation.setEasingCurve(QtCore.QEasingCurve.InOutCubic)
+        self.second_animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutCubic)
         self.second_animation.setDuration(duration // 2)
         self.second_animation.setStartValue(highlight_color)
         self.second_animation.setEndValue(self._base_color)
@@ -99,7 +99,7 @@ class Message(HighlightableWidget):
 
         self.set_width = False
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("border-radius: 20px; padding: 0px; margin: 0px")
         # self.setContentsMargins(0, 0, 0, 0)
 
@@ -117,12 +117,12 @@ class Message(HighlightableWidget):
             self.message_box.setStyleSheet(
                 "background-color: #202324; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px"
             )
-            self.main_layout.setAlignment(Qt.AlignRight)
+            self.main_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         else:
             self.message_box.setStyleSheet(
                 "background-color: #30302e; border-radius: 10px; padding: 10px;border-bottom-left-radius: 0px"
             )
-            self.main_layout.setAlignment(Qt.AlignLeft)
+            self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.message_layout = QtWidgets.QVBoxLayout(self.message_box)
         self.message_layout.setContentsMargins(0, 0, 0, 0)
@@ -134,7 +134,7 @@ class Message(HighlightableWidget):
             self.reply_to_label.setObjectName("reply_to_label")
             self.reply_to_label.setStyleSheet(reply_to_label_style)
             self.reply_to_label.setContentsMargins(0, 0, 0, 0)
-            self.reply_to_label.setCursor(Qt.PointingHandCursor)
+            self.reply_to_label.setCursor(Qt.CursorShape.PointingHandCursor)
             self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id))
             self.message_layout.addWidget(self.reply_to_label)
 
@@ -144,19 +144,20 @@ class Message(HighlightableWidget):
         self.text.setWordWrap(True)
 
         self.time_status_layout = QtWidgets.QHBoxLayout()
-        self.time_status_layout.setAlignment(Qt.AlignRight)
+        self.time_status_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.time_status_layout.setSpacing(0)
         self.time_status_layout.setContentsMargins(0, 0, 0, 0)
 
         self.time_label = QtWidgets.QLabel(self.time)
         self.time_label.setStyleSheet("font-size: 10px; color: grey; ")
-        self.time_label.setAlignment(Qt.AlignRight)
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.time_label.setContentsMargins(0, 0, -8, 0)
 
         self.time_status_layout.addWidget(self.time_label)
 
         if self.author == "me":
             self.status = QtWidgets.QLabel()
+            pixmap = None
             if self.message_type.status == MessageType.Status.SENDING:
                 icon = qta.icon("mdi.clock-outline", color="#c96442")
                 pixmap = icon.pixmap(18, 18)
@@ -166,13 +167,14 @@ class Message(HighlightableWidget):
             elif self.message_type.status == MessageType.Status.READ:
                 icon = qta.icon("mdi.check-all", color="#c96442")
                 pixmap = icon.pixmap(20, 20)
-            self.status.setPixmap(pixmap)
-            self.status.setFixedWidth(20)
-            self.status.setStyleSheet("padding: 0px; margin: 0px;")
-            # self.status.setAlignment(Qt.AlignRight)
-            self.status.setContentsMargins(0, 0, 0, 0)
+            if pixmap:
+                self.status.setPixmap(pixmap)
+                self.status.setFixedWidth(20)
+                self.status.setStyleSheet("padding: 0px; margin: 0px;")
+                # self.status.setAlignment(Qt.AlignRight)
+                self.status.setContentsMargins(0, 0, 0, 0)
 
-            self.time_status_layout.addWidget(self.status)
+                self.time_status_layout.addWidget(self.status)
 
         self.text_and_time_layout.addWidget(self.text)
         self.text_and_time_layout.addLayout(self.time_status_layout)
@@ -230,7 +232,7 @@ class Message(HighlightableWidget):
         path.lineTo(tail_points[0])
 
         # Fill the bubble
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         if self.is_mine:
             painter.setBrush("#202324")
         else:

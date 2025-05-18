@@ -20,7 +20,7 @@ class ChatItem(QtWidgets.QWidget):
         self.setObjectName("chat-list-item")
         self.setMouseTracking(True)
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
 
         # Create color objects for different states
         self.normal_color = "#1f1e1d"
@@ -34,27 +34,27 @@ class ChatItem(QtWidgets.QWidget):
         self.is_active = False
 
         # Set up the layout
-        self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.setContentsMargins(10, 0, 0, 0)
-        self.layout.setSpacing(0)
+        self.main_layout = QtWidgets.QHBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         self.avatar = RoundedAvatar(avatar)
 
         # Add avatar container to layout
-        self.layout.addWidget(self.avatar)
+        self.main_layout.addWidget(self.avatar)
 
         self.name_part = QtWidgets.QVBoxLayout()
 
         self.name_time_part = QtWidgets.QHBoxLayout()
         self.name_time_part.setContentsMargins(0, 15, 0, 0)
         self.name_time_part.setSpacing(0)
-        self.name_time_part.setAlignment(Qt.AlignVCenter)
+        self.name_time_part.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         self.name_label = QtWidgets.QLabel(name)
         self.name_label.setStyleSheet(
             "font-weight: bold; background-color: transparent; border-color: transparent; color: white"
         )
-        self.name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.name_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.name_label.setContentsMargins(10, 0, 0, 0)
 
         self.time_label = QtWidgets.QLabel(time)
@@ -62,7 +62,7 @@ class ChatItem(QtWidgets.QWidget):
             "font-size: 12px; color: #888; background-color: transparent; border-color: transparent"
         )
 
-        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.time_label.setContentsMargins(10, 0, 10, 0)
 
         self.name_time_part.addWidget(self.name_label)
@@ -77,7 +77,7 @@ class ChatItem(QtWidgets.QWidget):
         self.name_part.addLayout(self.name_time_part)
         self.name_part.addWidget(self.last_message_label)
 
-        self.layout.addLayout(self.name_part)
+        self.main_layout.addLayout(self.name_part)
 
     def update_background(self, color, active=False):
         """Update the background color using palette"""
@@ -102,7 +102,7 @@ class ChatItem(QtWidgets.QWidget):
 
     def mousePressEvent(self, event):
         """Handle mouse press event"""
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self)  # Emit signal with self as argument
         super().mousePressEvent(event)
 
@@ -147,18 +147,18 @@ class ChatList(QtWidgets.QWidget):
         self.setObjectName("Sidebar")
         self.setContentsMargins(0, 0, 0, 0)
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("background-color: #1f1e1d; border-radius: 14px")
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-        self.layout.setAlignment(Qt.AlignTop)
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.chats_layout = QtWidgets.QVBoxLayout(self)
         self.chats_layout.setContentsMargins(0, 0, 0, 0)
         self.chats_layout.setSpacing(0)
-        self.chats_layout.setAlignment(Qt.AlignTop)
+        self.chats_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.search_chat_input = QtWidgets.QLineEdit()
         self.search_chat_input.setPlaceholderText("Search chats...")
@@ -169,8 +169,8 @@ class ChatList(QtWidgets.QWidget):
             "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; color: white"
         )
 
-        self.layout.addWidget(self.search_chat_input)
-        self.layout.addLayout(self.chats_layout)
+        self.main_layout.addWidget(self.search_chat_input)
+        self.main_layout.addLayout(self.chats_layout)
 
         # Sidebar items
         self.chat_items = []

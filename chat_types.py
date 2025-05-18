@@ -16,6 +16,7 @@ class MessageType:
     sender: str
     time: str
     status: Status = Status.SENDING
+    
     reply_to: Optional["MessageType"] = None
 
 

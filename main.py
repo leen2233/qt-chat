@@ -30,7 +30,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.main_layout.setSpacing(10)
 
         # Create and set up splitter
-        self.splitter = QtWidgets.QSplitter(Qt.Horizontal)
+        self.splitter = QtWidgets.QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)  # Prevent collapsing sections
         self.splitter.setHandleWidth(1)
 
@@ -52,7 +52,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.splitter.setSizes([250, 750])
         self.main_layout.addWidget(self.splitter)
 
-        self.chat_area.chat_input.setFocus(Qt.MouseFocusReason)
+        self.chat_area.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
         # Window settings
         self.resize(1000, 600)
 

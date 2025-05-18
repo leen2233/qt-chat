@@ -10,9 +10,9 @@ class TextEdit(QtWidgets.QTextEdit):
 
     def keyPressEvent(self, event):
         # Check if Enter key is pressed
-        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             # Check if Shift is held down
-            if event.modifiers() & Qt.ShiftModifier:
+            if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                 # Insert a newline when Shift+Enter is pressed
                 super().keyPressEvent(event)
             else:

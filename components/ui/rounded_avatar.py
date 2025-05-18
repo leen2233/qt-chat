@@ -11,7 +11,7 @@ class RoundedAvatar(QtWidgets.QWidget):
         super().__init__(parent)
         self.setFixedSize(size[0], size[1])
         self.setStyleSheet("background-color: transparent;")
-        self.size = size
+        self.given_size = size
         self.nm = QNetworkAccessManager()
 
         self.avatar = QtWidgets.QLabel(self)
@@ -29,22 +29,22 @@ class RoundedAvatar(QtWidgets.QWidget):
 
     def set_default_avatar(self):
         """Set a default placeholder for the avatar"""
-        pixmap = QPixmap(self.size[0], self.size[1])
+        pixmap = QPixmap(self.given_size[0], self.given_size[1])
         pixmap.fill(QColor("#808080"))  # Gray placeholder
 
         # Create rounded placeholder
-        rounded = self.create_rounded_pixmap(pixmap, self.size[0])
+        rounded = self.create_rounded_pixmap(pixmap, self.given_size[0])
         self.avatar.setPixmap(rounded)
 
     def create_rounded_pixmap(self, original_pixmap, size):
         """Create a rounded version of the pixmap"""
         # Create a new transparent pixmap of the desired size
         rounded = QPixmap(size, size)
-        rounded.fill(Qt.transparent)
+        rounded.fill(Qt.GlobalColor.transparent)
 
         # Create a painter to draw on the new pixmap
         painter = QPainter(rounded)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Create a circular path
         path = QPainterPath()
@@ -54,7 +54,7 @@ class RoundedAvatar(QtWidgets.QWidget):
         painter.setClipPath(path)
 
         # Draw the original pixmap onto the new one, scaled to fit
-        scaled_pixmap = original_pixmap.scaled(size, size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        scaled_pixmap = original_pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
 
         # Calculate centering if aspect ratio isn't 1:1
         x_offset = (scaled_pixmap.width() - size) / 2 if scaled_pixmap.width() > size else 0
