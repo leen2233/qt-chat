@@ -1,10 +1,10 @@
 import qtawesome as qta
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import QPoint, QRect, Qt, Signal
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
 from chat_types import MessageType
-from styles import context_menu_style, reply_to_label_style
+from styles import Colors, context_menu_style, reply_to_label_style
 
 
 class HighlightableWidget(QtWidgets.QWidget):
@@ -106,21 +106,28 @@ class Message(HighlightableWidget):
         self.main_layout = QtWidgets.QHBoxLayout(self)
         top_margin = 2 if self.previous else 10
         bottom_margin = 2 if self.next else 10
-        self.main_layout.setContentsMargins(0, top_margin, 0, bottom_margin)
+        self.main_layout.setContentsMargins(4, top_margin, 4, bottom_margin)
         # self.main_layout.setContentsMargins(10, 5, 10, 5)
 
         self.message_box = QtWidgets.QWidget()
         self.message_box.setMinimumWidth(10)
         self.message_box.setMaximumWidth(570)  # Maximum width for any message
 
+        top_border_radius = "20px"
+        bottom_border_radius = "0px"
+        if self.previous:
+            top_border_radius = "5px"
+        if self.next:
+            bottom_border_radius = "5px"
+
         if self.is_mine:
             self.message_box.setStyleSheet(
-                "background-color: #202324; border-radius: 10px; padding: 10px; border-bottom-right-radius: 0px"
+                f"background-color: {Colors.USER_MESSAGE_BUBBLE}; border-radius: 20px; padding: 10px; border-bottom-right-radius: {bottom_border_radius}; border-top-right-radius: {top_border_radius}"
             )
             self.main_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         else:
             self.message_box.setStyleSheet(
-                "background-color: #30302e; border-radius: 10px; padding: 10px;border-bottom-left-radius: 0px"
+                f"background-color: {Colors.OTHER_MESSAGE_BUBBLE}; border-radius: 20px; padding: 10px;border-bottom-left-radius: {bottom_border_radius}; border-top-left-radius: {top_border_radius}"
             )
             self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
@@ -149,7 +156,7 @@ class Message(HighlightableWidget):
         self.time_status_layout.setContentsMargins(0, 0, 0, 0)
 
         self.time_label = QtWidgets.QLabel(self.time)
-        self.time_label.setStyleSheet("font-size: 10px; color: grey; ")
+        self.time_label.setStyleSheet(f"font-size: 10px; color: {'white' if self.is_mine else 'grey'}; ")
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.time_label.setContentsMargins(0, 0, -8, 0)
 
@@ -159,13 +166,13 @@ class Message(HighlightableWidget):
             self.status = QtWidgets.QLabel()
             pixmap = None
             if self.message_type.status == MessageType.Status.SENDING:
-                icon = qta.icon("mdi.clock-outline", color="#c96442")
+                icon = qta.icon("mdi.clock-outline", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(18, 18)
             elif self.message_type.status == MessageType.Status.SENT:
-                icon = qta.icon("mdi.check", color="#c96442")
+                icon = qta.icon("mdi.check", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(20, 20)
             elif self.message_type.status == MessageType.Status.READ:
-                icon = qta.icon("mdi.check-all", color="#c96442")
+                icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(20, 20)
             if pixmap:
                 self.status.setPixmap(pixmap)
@@ -193,7 +200,7 @@ class Message(HighlightableWidget):
             self.next = next
         top_margin = 2 if self.previous else 10
         bottom_margin = 2 if self.next else 10
-        self.main_layout.setContentsMargins(0, top_margin, 0, bottom_margin)
+        self.main_layout.setContentsMargins(4, top_margin, 4, bottom_margin)
 
     def paintEvent(self, event):
         if not self.set_width:
@@ -204,40 +211,44 @@ class Message(HighlightableWidget):
                 self.time_status_layout.setContentsMargins(0, 0, 10, 10)
             self.set_width = True
 
-        painter = QtGui.QPainter(self)
-        # Create a path for the bubble with tail
-        path = QtGui.QPainterPath()
-        rect = self.rect()
+        # painter = QtGui.QPainter(self)
+        # # Create a path for the bubble with tail
+        # path = QtGui.QPainterPath()
+        # rect = self.rect()
 
-        bubble_rect = QRect(rect)
+        # bubble_rect = QRect(rect)
 
-        if self.is_mine:
-            tail_points = [
-                QPoint(self.width() + 20 - 20, bubble_rect.height() - 9),
-                QPoint(self.width() + 20 - 30, bubble_rect.height() - 9),
-                QPoint(self.width() + 20 - 30, bubble_rect.height() - 19),
-            ]
-        else:
-            # Add tail on the left
-            tail_points = [
-                QPoint(10, bubble_rect.height() - 19),
-                QPoint(10, bubble_rect.height() - 9),
-                QPoint(0, bubble_rect.height() - 9),
-            ]
+        # minus_height = 10
+        # if self.next:
+        #     minus_height = 2
 
-        # Add the tail to the path
-        path.moveTo(tail_points[0])
-        path.lineTo(tail_points[1])
-        path.lineTo(tail_points[2])
-        path.lineTo(tail_points[0])
+        # if self.is_mine:
+        #     tail_points = [
+        #         QPoint(self.width() + 20 - 20, bubble_rect.height() - minus_height),
+        #         QPoint(self.width() + 20 - 30, bubble_rect.height() - minus_height),
+        #         QPoint(self.width() + 20 - 30, bubble_rect.height() - (10 + minus_height)),
+        #     ]
+        # else:
+        #     # Add tail on the left
+        #     tail_points = [
+        #         QPoint(10, bubble_rect.height() - (10 + minus_height)),
+        #         QPoint(10, bubble_rect.height() - minus_height),
+        #         QPoint(0, bubble_rect.height() - minus_height),
+        #     ]
 
-        # Fill the bubble
-        painter.setPen(Qt.PenStyle.NoPen)
-        if self.is_mine:
-            painter.setBrush("#202324")
-        else:
-            painter.setBrush("#30302e")
-        painter.drawPath(path)
+        # # Add the tail to the path
+        # path.moveTo(tail_points[0])
+        # path.lineTo(tail_points[1])
+        # path.lineTo(tail_points[2])
+        # path.lineTo(tail_points[0])
+
+        # # Fill the bubble
+        # painter.setPen(Qt.PenStyle.NoPen)
+        # if self.is_mine:
+        #     painter.setBrush("#202324")
+        # else:
+        #     painter.setBrush("#30302e")
+        # painter.drawPath(path)
 
     def contextMenuEvent(self, event):
         context_menu = QtWidgets.QMenu(self)

@@ -3,9 +3,11 @@ from typing import List
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QCursor
 from qtpy.QtWidgets import QWidgetAction
 
 from chat_types import ChatType
+from components.ui.iconed_button import IconedButton
 from components.ui.rounded_avatar import RoundedAvatar
 from styles import context_menu_style
 
@@ -19,12 +21,13 @@ class ChatItem(QtWidgets.QWidget):
         self.setFixedHeight(70)
         self.setObjectName("chat-list-item")
         self.setMouseTracking(True)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
 
         # Create color objects for different states
         self.normal_color = "#1f1e1d"
-        self.hover_color = "#171712"
+        self.hover_color = "#333333"
         self.active_color = "#262624"
 
         self.setStyleSheet(f"background-color: {self.normal_color}; border-radius: 14px;")
@@ -169,8 +172,12 @@ class ChatList(QtWidgets.QWidget):
             "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; color: white"
         )
 
+        self.settings_button = IconedButton("mdi.cog-outline", "Settings", color="white", height=70, margin=5)
+
         self.main_layout.addWidget(self.search_chat_input)
         self.main_layout.addLayout(self.chats_layout)
+        self.main_layout.addStretch()
+        self.main_layout.addWidget(self.settings_button)
 
         # Sidebar items
         self.chat_items = []

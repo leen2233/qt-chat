@@ -6,7 +6,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
 
 from chat_types import ChatType
+from components.ui.iconed_button import IconedButton
 from components.ui.rounded_avatar import RoundedAvatar
+from styles import Colors
 
 
 class Divider(QtWidgets.QWidget):
@@ -15,48 +17,6 @@ class Divider(QtWidgets.QWidget):
         self.setFixedHeight(8)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("border-radius: 4px; background-color: #262624;")
-
-
-class StatItem(QtWidgets.QWidget):
-    def __init__(self, icon_name, text, on_click, color="white"):
-        super().__init__()
-        self.setFixedHeight(45)
-        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.on_click = on_click
-
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
-        self.main_layout = QtWidgets.QHBoxLayout(self)
-        self.main_layout.setContentsMargins(20, 0, 10, 0)
-        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.main_layout.setSpacing(25)
-
-        self.hover_color = "#333333"
-        self.normal_color = "transparent"
-
-        self.icon = QtWidgets.QLabel()
-        self.icon.setPixmap(qta.icon(icon_name, color=color).pixmap(24, 24))
-        self.text = QtWidgets.QLabel(text)
-        self.text.setStyleSheet(f"color: {color}; font-size: 14px")
-        self.main_layout.addWidget(self.icon)
-        self.main_layout.addWidget(self.text)
-
-    def update_background(self, color):
-        """Update the background color using palette"""
-        self.setStyleSheet(f"background-color: {color}; border-radius: 14px;")
-
-    def enterEvent(self, event):
-        """Handle mouse enter event"""
-        self.update_background(self.hover_color)
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Handle mouse leave event"""
-        self.update_background(self.normal_color)
-        super().leaveEvent(event)
-
-    def mousePressEvent(self, event) -> None:
-        if self.on_click:
-            self.on_click()
 
 
 class Sidebar(QtWidgets.QWidget):
@@ -103,7 +63,7 @@ class Sidebar(QtWidgets.QWidget):
         self.time = QtWidgets.QLabel(chat.time if chat else "")
         if chat:
             if chat.time == "online":
-                self.time.setStyleSheet("color: #c96442; font-size: 14px")
+                self.time.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
             else:
                 self.time.setStyleSheet("color: grey; font-size: 14px")
         username_time_layout.addWidget(self.name)
@@ -142,7 +102,7 @@ class Sidebar(QtWidgets.QWidget):
         username_description_layout.setSpacing(0)
         self.username = QtWidgets.QLabel("@" + chat.username if chat else "")
         self.username.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.username.setStyleSheet("font-size: 14px; color: #c96442")
+        self.username.setStyleSheet(f"font-size: 14px; color: {Colors.PRIMARY}")
         description = QtWidgets.QLabel("Username")
         description.setStyleSheet("font-size: 10px; color: grey")
         username_description_layout.addWidget(self.username)
@@ -152,27 +112,40 @@ class Sidebar(QtWidgets.QWidget):
         username_info_layout.addLayout(username_description_layout)
 
         self.stats = QtWidgets.QVBoxLayout()
-        self.stats.setSpacing(2)
+        self.stats.setSpacing(0)
         if chat:
             if chat.stats.photos:
                 self.stats.addWidget(
-                    StatItem("mdi.google-photos", f"{chat.stats.photos} Photos", lambda: print("clicked"))
+                    IconedButton(
+                        "mdi.google-photos",
+                        f"{chat.stats.photos} Photos",
+                    )
                 )
             if chat.stats.videos:
-                self.stats.addWidget(StatItem("fa5s.video", f"{chat.stats.videos} Videos", None))
+                self.stats.addWidget(IconedButton("fa5s.video", f"{chat.stats.videos} Videos"))
             if chat.stats.files:
-                self.stats.addWidget(StatItem("fa5.file-alt", f"{chat.stats.files} Files", None))
+                self.stats.addWidget(IconedButton("fa5.file-alt", f"{chat.stats.files} Files"))
             if chat.stats.links:
-                self.stats.addWidget(StatItem("fa5s.link", f"{chat.stats.links} Links", None))
+                self.stats.addWidget(IconedButton("fa5s.link", f"{chat.stats.links} Links"))
             if chat.stats.voices:
-                self.stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
+                self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
 
         actions = QtWidgets.QVBoxLayout()
         actions.setSpacing(2)
-        actions.addWidget(StatItem("mdi.share", "Share this contact", None))
-        actions.addWidget(StatItem("mdi.square-edit-outline", "Edit this contact", None))
-        actions.addWidget(StatItem("mdi.delete", "Delete this contact", None))
-        actions.addWidget(StatItem("mdi.block-helper", "Block this user", None, color="red"))
+        actions.addWidget(
+            IconedButton(
+                "mdi.share",
+                "Share this contact",
+            )
+        )
+        actions.addWidget(IconedButton("mdi.square-edit-outline", "Edit this contact"))
+        actions.addWidget(
+            IconedButton(
+                "mdi.delete",
+                "Delete this contact",
+            )
+        )
+        actions.addWidget(IconedButton("mdi.block-helper", "Block this user", color="red"))
 
         self.main_layout.addLayout(header_layout)
         self.main_layout.addLayout(user_info_layout)
@@ -193,7 +166,7 @@ class Sidebar(QtWidgets.QWidget):
         self.time.setText(chat.time)
 
         if chat.time == "online":
-            self.time.setStyleSheet("color: #c96442; font-size: 14px")
+            self.time.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
         else:
             self.time.setStyleSheet("color: grey; font-size: 14px")
 
@@ -205,15 +178,30 @@ class Sidebar(QtWidgets.QWidget):
                 item.widget().deleteLater()
 
         if chat.stats.photos:
-            self.stats.addWidget(StatItem("mdi.google-photos", f"{chat.stats.photos} Photos", lambda: print("clicked")))
+            self.stats.addWidget(IconedButton("mdi.google-photos", f"{chat.stats.photos} Photos"))
         if chat.stats.videos:
-            self.stats.addWidget(StatItem("fa5s.video", f"{chat.stats.videos} Videos", None))
+            self.stats.addWidget(
+                IconedButton(
+                    "fa5s.video",
+                    f"{chat.stats.videos} Videos",
+                )
+            )
         if chat.stats.files:
-            self.stats.addWidget(StatItem("fa5.file-alt", f"{chat.stats.files} Files", None))
+            self.stats.addWidget(
+                IconedButton(
+                    "fa5.file-alt",
+                    f"{chat.stats.files} Files",
+                )
+            )
         if chat.stats.links:
-            self.stats.addWidget(StatItem("fa5s.link", f"{chat.stats.links} Links", None))
+            self.stats.addWidget(
+                IconedButton(
+                    "fa5s.link",
+                    f"{chat.stats.links} Links",
+                )
+            )
         if chat.stats.voices:
-            self.stats.addWidget(StatItem("ri.voiceprint-line", f"{chat.stats.voices} Voices", None))
+            self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
 
     def close(self) -> bool:
         self.sidebar_closed.emit("closed")

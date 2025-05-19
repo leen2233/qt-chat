@@ -13,7 +13,7 @@ from components.ui.rounded_avatar import RoundedAvatar
 from components.ui.text_edit import TextEdit
 from components.ui.typing_indicator import TypingIndicator
 from data import CHAT_LIST
-from styles import replying_to_label_style
+from styles import Colors, replying_to_label_style
 
 
 class ChatBox(QtWidgets.QWidget):
@@ -159,7 +159,7 @@ class ChatBox(QtWidgets.QWidget):
         self.send_button.setIconSize(QSize(22, 22))
         self.send_button.setFixedSize(50, 50)  # Set a fixed size for the button
         self.send_button.setStyleSheet(
-            "background-color: #c96442; color: white; border-radius: 10px; font-weight: bold;"
+            f"background-color: {Colors.PRIMARY}; color: white; border-radius: 10px; font-weight: bold;"
         )
         self.send_button.clicked.connect(self.send_my_message)
 
@@ -254,7 +254,7 @@ class ChatBox(QtWidgets.QWidget):
         self.username.setText(chat.name)
         self.last_seen.setText(chat.time)
         if chat.time == "online":
-            self.last_seen.setStyleSheet("color: #c96442; font-size: 14px")
+            self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
         else:
             self.last_seen.setStyleSheet("color: grey; font-size: 14px")
         self.chat = chat
@@ -264,7 +264,7 @@ class ChatBox(QtWidgets.QWidget):
         self.sidebar_button.setIcon(
             qta.icon("msc.layout-sidebar-right-off", color="white")
             if self.sidebar_toggled
-            else qta.icon("msc.layout-sidebar-right-off", color="#c96442")
+            else qta.icon("msc.layout-sidebar-right-off", color=Colors.PRIMARY)
         )
         self.sidebar_toggled = not self.sidebar_toggled
         self.sidebar_toggled_signal.emit(self.sidebar_toggled)
