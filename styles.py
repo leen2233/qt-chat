@@ -77,7 +77,7 @@ class Colors:
     # Background colors
     BACKGROUND_DARK = "#1f1a17"  # Very dark brown/black
     BACKGROUND_MEDIUM = "#2d2622"  # Dark brown
-    BACKGROUND_LIGHT = "#3a322c"  # Medium-dark brown
+    BACKGROUND_LIGHT = "rgb(201, 100, 66)"  # Medium-dark brown
 
     # Accent colors
     ACCENT_SUCCESS = "#4a9660"  # Dark green

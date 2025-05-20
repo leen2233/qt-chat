@@ -1,14 +1,12 @@
-# Telegram-like chat app with dark theme and active chat highlighting
-# Features: Sidebar with highlighted active chat, message display, input field, send button
-# Dark theme only, no light theme
-
 import sys
+from typing import Optional
 
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
+from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
 from data import CHAT_LIST
 
@@ -18,6 +16,8 @@ class ChatApp(QtWidgets.QMainWindow):
         super().__init__()
         self.selected_chat = None
         self.sidebar_opened = False
+
+        self.settings_modal = None
 
         # Main widget and layout
         self.setWindowTitle("Telegram-like App")
@@ -42,6 +42,7 @@ class ChatApp(QtWidgets.QMainWindow):
         # chat list1
         self.chat_list = ChatList()
         self.chat_list.chat_selected.connect(self.chat_selected)
+        self.chat_list.settings_clicked.connect(self.open_settings)
 
         # Main chat area
         self.chat_area = ChatBox()
@@ -112,9 +113,46 @@ class ChatApp(QtWidgets.QMainWindow):
 
             self.sidebar.hide_animation(on_finished=remove_sidebar)
 
+    def open_settings(self):
+        self.settings_modal = SettingsModal(parent=self.central_widget)
+        self.settings_modal.font_applied.connect(self.apply_font)
+        self.settings_modal.move_to_center()
+        self.settings_modal.show()
+
+    def apply_font(self, font_name):
+        # Create a font with the selected name
+        font = QtGui.QFont(font_name)
+
+        # Apply to application (affects new widgets)
+        app: Optional[QtWidgets.QApplication] = QtWidgets.QApplication.instance()  # type: ignore
+        if app:
+            app.setFont(font)
+
+            # Apply to all existing widgets through stylesheet
+            font_style = f"* {{ font-family: '{font_name}'; }}"
+            app.setStyleSheet(app.styleSheet() + font_style)
+
+            # Force update on existing widgets
+            for widget in app.allWidgets():
+                widget.setFont(font)
+                if type(widget) is not QtWidgets.QListWidget:
+                    widget.update()
+
+            # Update the main window and all its children
+            self.updateGeometry()
+            self.update()
+
+    def resizeEvent(self, event):
+        """Handle window resize events to reposition the panel if needed"""
+        super().resizeEvent(event)
+
+        if self.settings_modal:
+            self.settings_modal.move_to_center()
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle("Fusion")
     window = ChatApp()
     window.show()
     sys.exit(app.exec())

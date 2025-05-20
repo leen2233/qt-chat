@@ -18,7 +18,7 @@ class HighlightableWidget(QtWidgets.QWidget):
         self._update_stylesheet()
 
         self._animation = QtCore.QPropertyAnimation(self, b"highlight_color")
-        self._animation.setEasingCurve(QtCore.QEasingCurve.InOutCubic)
+        self._animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutCubic)
 
     def _update_stylesheet(self):
         """Update the widget's stylesheet with the current color"""

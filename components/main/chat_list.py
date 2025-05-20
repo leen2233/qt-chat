@@ -141,6 +141,7 @@ class ChatItem(QtWidgets.QWidget):
 
 class ChatList(QtWidgets.QWidget):
     chat_selected = Signal(str)
+    settings_clicked = Signal()
 
     def __init__(self):
         super().__init__()
@@ -173,6 +174,7 @@ class ChatList(QtWidgets.QWidget):
         )
 
         self.settings_button = IconedButton("mdi.cog-outline", "Settings", color="white", height=70, margin=5)
+        self.settings_button.clicked.connect(lambda: self.settings_clicked.emit())
 
         self.main_layout.addWidget(self.search_chat_input)
         self.main_layout.addLayout(self.chats_layout)
