@@ -9,11 +9,14 @@ from components.main.chatbox import ChatBox
 from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
 from data import CHAT_LIST
+from lib.config import ConfigManager
 
 
 class ChatApp(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.config = ConfigManager()
+
         self.selected_chat = None
         self.sidebar_opened = False
 
@@ -59,6 +62,9 @@ class ChatApp(QtWidgets.QMainWindow):
 
         self.setup_shortcuts()
         self.chat_list.load_chats(CHAT_LIST)
+
+        if self.config.get("ui", "font", ""):
+            self.apply_font(self.config.get("ui", "font"))
 
     def setup_shortcuts(self):
         ctrlTab = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Tab"), self)
@@ -122,6 +128,8 @@ class ChatApp(QtWidgets.QMainWindow):
     def apply_font(self, font_name):
         # Create a font with the selected name
         font = QtGui.QFont(font_name)
+
+        self.config.set("ui", "font", font_name)
 
         # Apply to application (affects new widgets)
         app: Optional[QtWidgets.QApplication] = QtWidgets.QApplication.instance()  # type: ignore

@@ -38,20 +38,25 @@ context_menu_style = """
 """
 
 
-reply_to_label_style = """
-    QPushButton {
-        font-size: 10px;
-        color: white;
-        background-color: #4c4c4b;
-        margin: 10px;
-        margin-bottom: 0px;
-        border-left: 3px solid #686867;
-        border-radius: 15px;
-    }
-    QPushButton:hover {
-        background-color: #3E3E42;
-    }
-"""
+def build_reply_to_label_style(is_mine=False):
+    if is_mine:
+        background_color, hover_color, border_color = "#a46857", "#e78d74", "#c5664c"
+    else:
+        background_color, hover_color, border_color = "#4c4c4b", "#3E3E42", "#686867"
+    return (
+        "QPushButton {                            "
+        "    font-size: 10px;                     "
+        "    color: white;                        "
+        f"   background-color: {background_color};"
+        "    margin: 10px;                        "
+        "    margin-bottom: 0px;                  "
+        f"   border-left: 3px solid {border_color};"
+        "    border-radius: 15px;                 "
+        "}                                        "
+        "QPushButton:hover {                      "
+        f"   background-color: {hover_color};           "
+        "}                                        "
+    )
 
 
 replying_to_label_style = """

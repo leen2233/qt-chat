@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 
 from chat_types import MessageType
-from styles import Colors, context_menu_style, reply_to_label_style
+from styles import Colors, build_reply_to_label_style, context_menu_style
 
 
 class HighlightableWidget(QtWidgets.QWidget):
@@ -139,7 +139,10 @@ class Message(HighlightableWidget):
             self.reply_to_label = QtWidgets.QPushButton(f" {message.reply_to.text[:100]}")
             self.reply_to_label.setMaximumHeight(80)
             self.reply_to_label.setObjectName("reply_to_label")
-            self.reply_to_label.setStyleSheet(reply_to_label_style)
+            if self.is_mine:
+                self.reply_to_label.setStyleSheet(build_reply_to_label_style(is_mine= True))
+            else:
+                self.reply_to_label.setStyleSheet(build_reply_to_label_style())
             self.reply_to_label.setContentsMargins(0, 0, 0, 0)
             self.reply_to_label.setCursor(Qt.CursorShape.PointingHandCursor)
             self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id))
@@ -148,6 +151,7 @@ class Message(HighlightableWidget):
         self.text_and_time_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.TopToBottom)
 
         self.text = QtWidgets.QLabel(self.message)
+        self.text.setStyleSheet("font-size: 12px")
         self.text.setWordWrap(True)
 
         self.time_status_layout = QtWidgets.QHBoxLayout()
