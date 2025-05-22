@@ -142,6 +142,14 @@ CHAT_LIST = [
                 sender="me",
                 time="10:07 AM",
             ),
+            MessageType(
+                id=7,
+                text="""Hey
+hey
+hey""",
+                sender="another",
+                time="10:07 AM",
+            ),
         ],
     ),
     ChatType(

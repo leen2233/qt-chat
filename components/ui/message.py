@@ -1,6 +1,6 @@
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor
 
 from chat_types import MessageType
@@ -95,8 +95,6 @@ class Message(HighlightableWidget):
         self.previous = self.author == previous
         self.next = self.author == next
 
-        self.status = message.status
-
         self.set_width = False
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
@@ -111,7 +109,7 @@ class Message(HighlightableWidget):
 
         self.message_box = QtWidgets.QWidget()
         self.message_box.setMinimumWidth(10)
-        self.message_box.setMaximumWidth(570)  # Maximum width for any message
+        self.message_box.setMaximumWidth(600)  # Maximum width for any message
 
         top_border_radius = "20px"
         bottom_border_radius = "0px"
@@ -140,7 +138,7 @@ class Message(HighlightableWidget):
             self.reply_to_label.setMaximumHeight(80)
             self.reply_to_label.setObjectName("reply_to_label")
             if self.is_mine:
-                self.reply_to_label.setStyleSheet(build_reply_to_label_style(is_mine= True))
+                self.reply_to_label.setStyleSheet(build_reply_to_label_style(is_mine=True))
             else:
                 self.reply_to_label.setStyleSheet(build_reply_to_label_style())
             self.reply_to_label.setContentsMargins(0, 0, 0, 0)
@@ -150,9 +148,11 @@ class Message(HighlightableWidget):
 
         self.text_and_time_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.TopToBottom)
 
-        self.text = QtWidgets.QLabel(self.message)
-        self.text.setStyleSheet("font-size: 12px")
-        self.text.setWordWrap(True)
+        self.text = QtWidgets.QTextEdit()
+        self.text.setPlainText(self.message)
+        self.text.setMaximumWidth(590)
+        self.text.setStyleSheet("font-size: 12px; padding: 5px; margin: 0; padding-right: 0;")
+        self.text.setReadOnly(True)
 
         self.time_status_layout = QtWidgets.QHBoxLayout()
         self.time_status_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -160,9 +160,11 @@ class Message(HighlightableWidget):
         self.time_status_layout.setContentsMargins(0, 0, 0, 0)
 
         self.time_label = QtWidgets.QLabel(self.time)
-        self.time_label.setStyleSheet(f"font-size: 10px; color: {'white' if self.is_mine else 'grey'}; ")
-        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.time_label.setContentsMargins(0, 0, -8, 0)
+        self.time_label.setStyleSheet(
+            f"font-size: 10px; color: {'white' if self.is_mine else 'grey'}; padding: 0; margin: 0; position: absolute; left: 10px;"
+        )
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        self.time_label.setContentsMargins(0, 0, 0, 0)
 
         self.time_status_layout.addWidget(self.time_label)
 
@@ -194,6 +196,70 @@ class Message(HighlightableWidget):
 
         self.main_layout.addWidget(self.message_box)
 
+        QTimer.singleShot(50, self.adjust_sizes)
+
+    def adjust_sizes(self):
+        # adjust QTextInput height and width
+        doc_height = int(self.text.document().size().height())
+        doc_width = int(self.text.document().idealWidth() + 20)
+        new_height = int(max(doc_height + 10, 40))  # Adjust between min and max
+        self.text.setMinimumHeight(new_height)
+        self.text.setMaximumWidth(doc_width)
+
+        # self.text.setStyleSheet("border: 1px solid red")
+        # adjust message box width
+        message_box_width = min(doc_width + self.time_status_layout.sizeHint().width() + 20, 600)
+        self.message_box.setMaximumWidth(message_box_width)
+        # adjust time and status thing
+        print(self.width())
+        if doc_height > 30 and doc_width > (self.width() - 50):  # more than one line and one line is full
+            self.time_status_layout.removeWidget(self.time_label)
+            self.time_label.setParent(self.text)
+            self.time_label.setFixedWidth(self.time_label.width())
+            if self.author == "me":
+                self.time_status_layout.removeWidget(self.status)
+                self.status.setParent(self.text)
+                # self.status.setFixedWidth(self.status.width() + 20)
+
+            cursor = self.text.textCursor()
+            cursor.movePosition(cursor.MoveOperation.End)
+            cursor_rect = self.text.cursorRect(cursor)
+
+            time_label_width = self.time_label.sizeHint().width()
+            if cursor_rect.x() < self.message_box.width() - 100:
+                if self.author == "me":
+                    x = self.message_box.width() - time_label_width - 35
+                else:
+                    x = self.message_box.width() - time_label_width - 15
+                y = cursor_rect.y() + cursor_rect.height() - 5
+
+                self.time_label.move(x, y)
+                self.time_label.show()
+                if self.author == "me":
+                    self.status.move(x + time_label_width, y)
+                    self.status.show()
+
+                self.message_box.setMinimumHeight(doc_height + 10)
+            else:
+                x = self.message_box.width() - time_label_width - 10
+                y = cursor_rect.y() + cursor_rect.height() + 10
+
+                self.time_label.move(x, y)
+                self.time_label.show()
+                self.message_box.setMinimumHeight(doc_height + 30)
+        if not self.set_width:
+            if self.text.width() < 530:
+                self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
+                self.time_status_layout.setContentsMargins(0, 13, 10, 0)
+            else:
+                self.time_status_layout.setContentsMargins(0, 0, 10, 10)
+            self.set_width = True
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.size().width() < 600:
+            self.adjust_sizes()
+
     def mouseDoubleClickEvent(self, event):
         self.reply_clicked.emit(self.message_type)
 
@@ -206,53 +272,53 @@ class Message(HighlightableWidget):
         bottom_margin = 2 if self.next else 10
         self.main_layout.setContentsMargins(4, top_margin, 4, bottom_margin)
 
-    def paintEvent(self, event):
-        if not self.set_width:
-            if self.text.width() < 530:
-                self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
-                self.time_status_layout.setContentsMargins(0, 13, 10, 0)
-            else:
-                self.time_status_layout.setContentsMargins(0, 0, 10, 10)
-            self.set_width = True
+    # def paintEvent(self, event):
+    # if not self.set_width:
+    #     if self.text.width() < 530:
+    #         self.text_and_time_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
+    #         self.time_status_layout.setContentsMargins(0, 13, 10, 0)
+    #     else:
+    #         self.time_status_layout.setContentsMargins(0, 0, 10, 10)
+    #     self.set_width = True
 
-        # painter = QtGui.QPainter(self)
-        # # Create a path for the bubble with tail
-        # path = QtGui.QPainterPath()
-        # rect = self.rect()
+    # painter = QtGui.QPainter(self)
+    # # Create a path for the bubble with tail
+    # path = QtGui.QPainterPath()
+    # rect = self.rect()
 
-        # bubble_rect = QRect(rect)
+    # bubble_rect = QRect(rect)
 
-        # minus_height = 10
-        # if self.next:
-        #     minus_height = 2
+    # minus_height = 10
+    # if self.next:
+    #     minus_height = 2
 
-        # if self.is_mine:
-        #     tail_points = [
-        #         QPoint(self.width() + 20 - 20, bubble_rect.height() - minus_height),
-        #         QPoint(self.width() + 20 - 30, bubble_rect.height() - minus_height),
-        #         QPoint(self.width() + 20 - 30, bubble_rect.height() - (10 + minus_height)),
-        #     ]
-        # else:
-        #     # Add tail on the left
-        #     tail_points = [
-        #         QPoint(10, bubble_rect.height() - (10 + minus_height)),
-        #         QPoint(10, bubble_rect.height() - minus_height),
-        #         QPoint(0, bubble_rect.height() - minus_height),
-        #     ]
+    # if self.is_mine:
+    #     tail_points = [
+    #         QPoint(self.width() + 20 - 20, bubble_rect.height() - minus_height),
+    #         QPoint(self.width() + 20 - 30, bubble_rect.height() - minus_height),
+    #         QPoint(self.width() + 20 - 30, bubble_rect.height() - (10 + minus_height)),
+    #     ]
+    # else:
+    #     # Add tail on the left
+    #     tail_points = [
+    #         QPoint(10, bubble_rect.height() - (10 + minus_height)),
+    #         QPoint(10, bubble_rect.height() - minus_height),
+    #         QPoint(0, bubble_rect.height() - minus_height),
+    #     ]
 
-        # # Add the tail to the path
-        # path.moveTo(tail_points[0])
-        # path.lineTo(tail_points[1])
-        # path.lineTo(tail_points[2])
-        # path.lineTo(tail_points[0])
+    # # Add the tail to the path
+    # path.moveTo(tail_points[0])
+    # path.lineTo(tail_points[1])
+    # path.lineTo(tail_points[2])
+    # path.lineTo(tail_points[0])
 
-        # # Fill the bubble
-        # painter.setPen(Qt.PenStyle.NoPen)
-        # if self.is_mine:
-        #     painter.setBrush("#202324")
-        # else:
-        #     painter.setBrush("#30302e")
-        # painter.drawPath(path)
+    # # Fill the bubble
+    # painter.setPen(Qt.PenStyle.NoPen)
+    # if self.is_mine:
+    #     painter.setBrush("#202324")
+    # else:
+    #     painter.setBrush("#30302e")
+    # painter.drawPath(path)
 
     def contextMenuEvent(self, event):
         context_menu = QtWidgets.QMenu(self)
