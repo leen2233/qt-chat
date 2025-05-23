@@ -1,6 +1,8 @@
+import os
 import sys
 from typing import Optional
 
+from dotenv import load_dotenv
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
@@ -10,12 +12,23 @@ from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
 from data import CHAT_LIST
 from lib.config import ConfigManager
+from lib.conn import Conn
+
+load_dotenv()
+
+HOST = os.getenv("HOST", "")
+PORT = int(os.getenv("PORT", "9090"))
 
 
 class ChatApp(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = ConfigManager()
+        self.conn = Conn(HOST, PORT)
+        self.conn.connected_callback = self.on_connect
+        self.conn.disconnected_callback = self.on_disconnect
+
+        self.connected = False
 
         self.selected_chat = None
         self.sidebar_opened = False
@@ -65,6 +78,8 @@ class ChatApp(QtWidgets.QMainWindow):
 
         if self.config.get("ui", "font", ""):
             self.apply_font(self.config.get("ui", "font"))
+
+        self.conn.start()
 
     def setup_shortcuts(self):
         ctrlTab = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Tab"), self)
@@ -156,6 +171,12 @@ class ChatApp(QtWidgets.QMainWindow):
 
         if self.settings_modal:
             self.settings_modal.move_to_center()
+
+    def on_connect(self):
+        self.chat_list.handle_connected()
+
+    def on_disconnect(self):
+        self.chat_list.handle_disconnected()
 
 
 if __name__ == "__main__":

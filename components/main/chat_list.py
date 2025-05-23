@@ -173,10 +173,17 @@ class ChatList(QtWidgets.QWidget):
             "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; color: white"
         )
 
+        self.connecting_label = QtWidgets.QLabel("Connecting...")
+        self.connecting_label.setFixedHeight(60)
+        self.connecting_label.setContentsMargins(10, 10, 10, 10)
+        self.connecting_label.setStyleSheet("background-color: #30302e; border-radius: 10px; color: white")
+        self.connecting_label.setVisible(False)
+
         self.settings_button = IconedButton("mdi.cog-outline", "Settings", color="white", height=70, margin=5)
         self.settings_button.clicked.connect(lambda: self.settings_clicked.emit())
 
         self.main_layout.addWidget(self.search_chat_input)
+        self.main_layout.addWidget(self.connecting_label)
         self.main_layout.addLayout(self.chats_layout)
         self.main_layout.addStretch()
         self.main_layout.addWidget(self.settings_button)
@@ -212,3 +219,11 @@ class ChatList(QtWidgets.QWidget):
 
         active_item.set_active(True)
         self.active_item = active_item
+
+    def handle_connected(self):
+        self.connecting_label.setVisible(False)
+        self.search_chat_input.setVisible(True)
+
+    def handle_disconnected(self):
+        self.connecting_label.setVisible(True)
+        self.search_chat_input.setVisible(False)

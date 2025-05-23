@@ -211,7 +211,6 @@ class Message(HighlightableWidget):
         message_box_width = min(doc_width + self.time_status_layout.sizeHint().width() + 20, 600)
         self.message_box.setMaximumWidth(message_box_width)
         # adjust time and status thing
-        print(self.width())
         if doc_height > 30 and doc_width > (self.width() - 50):  # more than one line and one line is full
             self.time_status_layout.removeWidget(self.time_label)
             self.time_label.setParent(self.text)

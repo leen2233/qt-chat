@@ -142,7 +142,10 @@ class FontSettings(QFrame):
         families = font_db.families(writing_system)
         for family in families:
             item_widget = QLabel(family)
-            item_widget.setStyleSheet("background-color: #30302e; border-radius: 5px; color: white")
+            item_widget.setStyleSheet(
+                f"background-color: #30302e; border-radius: 5px; color: white; font-family: {family}"
+            )
+            item_widget.setObjectName("font-item")
             item_widget.setFont(family)
             item = QListWidgetItem(self.font_list)
             item.setSizeHint(item_widget.sizeHint())
@@ -181,7 +184,9 @@ class FontSettings(QFrame):
     def on_font_selected(self, item):
         font_family = item.data(Qt.ItemDataRole.UserRole)
         self.font_size_label.setFont(font_family)
+        self.font_size_label.setStyleSheet(self.font_size_label.styleSheet() + f";font-family: {font_family}")
         self.header.header_label.setFont(font_family)
+        self.header.header_label.setStyleSheet(self.header.header_label.styleSheet() + f";font-family: {font_family}")
         self.cancel_button.setFont(font_family)
         self.apply_button.setFont(font_family)
         self.selected_font = font_family
