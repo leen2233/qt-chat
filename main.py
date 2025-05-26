@@ -4,10 +4,11 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from PySide6 import QtGui, QtWidgets
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSettings, Qt
 
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
+from components.main.login import Login
 from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
 from data import CHAT_LIST
@@ -36,7 +37,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.settings_modal = None
 
         # Main widget and layout
-        self.setWindowTitle("Telegram-like App")
+        self.setWindowTitle("Veia")
         self.setMouseTracking(True)
         self.central_widget = QtWidgets.QWidget()
         self.setCentralWidget(self.central_widget)
@@ -178,10 +179,20 @@ class ChatApp(QtWidgets.QMainWindow):
     def on_disconnect(self):
         self.chat_list.handle_disconnected()
 
+    def closeEvent(self, event) -> None:
+        self.conn.stop()
+        return super().closeEvent(event)
+
 
 if __name__ == "__main__":
+    settings = QSettings("Veia Sp.", "Veia")
+    refresh_token = settings.value("refresh_token")
+
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
-    window = ChatApp()
+    if refresh_token:
+        window = ChatApp()
+    else:
+        window = Login(HOST, PORT)
     window.show()
     sys.exit(app.exec())

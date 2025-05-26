@@ -175,8 +175,8 @@ class ChatList(QtWidgets.QWidget):
 
         self.connecting_label = QtWidgets.QLabel("Connecting...")
         self.connecting_label.setFixedHeight(60)
-        self.connecting_label.setContentsMargins(10, 10, 10, 10)
-        self.connecting_label.setStyleSheet("background-color: #30302e; border-radius: 10px; color: white")
+        self.connecting_label.setContentsMargins(10, 0, 0, 0)
+        self.connecting_label.setStyleSheet("background-color: #30302e; border-radius: 10px; color: white; border: 0.5px solid grey; margin: 10;")
         self.connecting_label.setVisible(False)
 
         self.settings_button = IconedButton("mdi.cog-outline", "Settings", color="white", height=70, margin=5)
