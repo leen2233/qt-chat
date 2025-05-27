@@ -17,6 +17,7 @@ class Conn:
 
         self.connected_callback: Optional[Callable] = None
         self.disconnected_callback: Optional[Callable] = None
+        self.on_message_callback: Optional[Callable] = None
 
     def connect(self):
         self.server.connect((self.host, self.port))
@@ -57,7 +58,13 @@ class Conn:
         self.server.send(encoded)
 
     def on_message(self, message: str):
-        print("message got:", message)
+        print("message got: ", message)
+        try:
+            data = json.loads(message)
+            if self.on_message_callback:
+                self.on_message_callback(data)
+        except json.JSONDecodeError:
+            print("invalid json")
 
     def send_data(self, body: dict):
         data = json.dumps(body)

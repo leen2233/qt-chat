@@ -186,6 +186,7 @@ class ChatApp(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     settings = QSettings("Veia Sp.", "Veia")
+    settings.setValue("refresh_token", None)
     refresh_token = settings.value("refresh_token")
 
     app = QtWidgets.QApplication(sys.argv)
@@ -193,6 +194,6 @@ if __name__ == "__main__":
     if refresh_token:
         window = ChatApp()
     else:
-        window = Login(HOST, PORT)
+        window = Login(HOST, PORT, ChatApp)
     window.show()
     sys.exit(app.exec())
