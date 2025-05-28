@@ -4,8 +4,9 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from PySide6 import QtGui, QtWidgets
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings, Qt, Signal
 
+from chat_types import User
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
 from components.main.login import Login
@@ -22,12 +23,19 @@ PORT = int(os.getenv("PORT", "9090"))
 
 
 class ChatApp(QtWidgets.QMainWindow):
+    show_login_window = Signal()
+    search_results_received = Signal(list)
+
     def __init__(self):
         super().__init__()
         self.config = ConfigManager()
-        self.conn = Conn(HOST, PORT)
+        self.settings = QSettings("Veia Sp.", "Veia")
+        self.refresh_token = settings.value("refresh_token")
+        self.access_token = settings.value("access_token")
+        self.conn = Conn(HOST, PORT, self.access_token)
         self.conn.connected_callback = self.on_connect
         self.conn.disconnected_callback = self.on_disconnect
+        self.conn.on_message_callback = self.on_message
 
         self.connected = False
 
@@ -60,6 +68,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list = ChatList()
         self.chat_list.chat_selected.connect(self.chat_selected)
         self.chat_list.settings_clicked.connect(self.open_settings)
+        self.chat_list.chat_searched.connect(self.search_chat)
 
         # Main chat area
         self.chat_area = ChatBox()
@@ -80,6 +89,7 @@ class ChatApp(QtWidgets.QMainWindow):
         if self.config.get("ui", "font", ""):
             self.apply_font(self.config.get("ui", "font"))
 
+        self.search_results_received.connect(self.chat_list.load_search_results)
         self.conn.start()
 
     def setup_shortcuts(self):
@@ -166,6 +176,10 @@ class ChatApp(QtWidgets.QMainWindow):
             self.updateGeometry()
             self.update()
 
+    def search_chat(self, query: str):
+        data = {"action": "search_users", "data": {"q": query}}
+        self.conn.send_data(data)
+
     def resizeEvent(self, event):
         """Handle window resize events to reposition the panel if needed"""
         super().resizeEvent(event)
@@ -179,6 +193,28 @@ class ChatApp(QtWidgets.QMainWindow):
     def on_disconnect(self):
         self.chat_list.handle_disconnected()
 
+    def on_message(self, data):
+        if data.get("action") == "authenticate" and data.get("success") is False:
+            data = {"action": "refresh_access_token", "data": {"refresh_token": self.refresh_token}}
+            self.conn.send_data(data)
+        elif data.get("action") == "refresh_access_token":
+            if data.get("success") is False or not data.get("data", {}).get("access_token"):
+                self.settings.setValue("refresh_token", None)
+                self.settings.setValue("access_token", None)
+                self.show_login_window.emit()
+                self.destroy()
+            else:
+                self.access_token = data.get("data", {}).get("access_token")
+                self.settings.setValue("access_token", self.access_token)
+                data = {"action": "authenticate", "data": {"access_token": self.access_token}}
+                self.conn.send_data(data)
+        elif data.get("action") == "search_users":
+            print("loading")
+            results = data.get("data", {}).get("results")
+            results = [User(**user) for user in results]
+            print(results)
+            self.search_results_received.emit(results)
+
     def closeEvent(self, event) -> None:
         self.conn.stop()
         return super().closeEvent(event)
@@ -186,14 +222,26 @@ class ChatApp(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     settings = QSettings("Veia Sp.", "Veia")
-    settings.setValue("refresh_token", None)
     refresh_token = settings.value("refresh_token")
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    def show_main_window():
+        main_window = ChatApp()
+        main_window.show()
+
+    def show_login_window():
+        login_window = Login(HOST, PORT)
+        login_window.show()
+
     if refresh_token:
         window = ChatApp()
+        window.show_login_window.connect(show_login_window)
     else:
-        window = Login(HOST, PORT, ChatApp)
+        login_window = Login(HOST, PORT)
+        login_window.login_successful.connect(show_main_window)
+        window = login_window
+
     window.show()
     sys.exit(app.exec())

@@ -6,11 +6,12 @@ from typing import Callable, Optional
 
 
 class Conn:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, access_token: Optional[str] = None):
         self.host = host
         self.port = port
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.settimeout(1.0)
+        self.access_token = access_token
 
         self.thread = None
         self._running = True
@@ -23,6 +24,10 @@ class Conn:
         self.server.connect((self.host, self.port))
         if self.connected_callback:
             self.connected_callback()
+        print("access token", self.access_token)
+        if self.access_token:
+            data = {"action": "authenticate", "data": {"access_token": self.access_token}}
+            self.send_data(data)
 
     def handle_disconnect(self):
         if self.disconnected_callback:
@@ -58,7 +63,6 @@ class Conn:
         self.server.send(encoded)
 
     def on_message(self, message: str):
-        print("message got: ", message)
         try:
             data = json.loads(message)
             if self.on_message_callback:

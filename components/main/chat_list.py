@@ -1,147 +1,18 @@
 from typing import List
 
-import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QCursor
-from qtpy.QtWidgets import QWidgetAction
 
-from chat_types import ChatType
+from chat_types import ChatType, User
+from components.ui.chat_list.chat_list_item import ChatListItem
+from components.ui.chat_list.result_item import ResultItem
 from components.ui.iconed_button import IconedButton
-from components.ui.rounded_avatar import RoundedAvatar
-from styles import context_menu_style
-
-
-class ChatItem(QtWidgets.QWidget):
-    clicked = Signal(object)  # Signal when item is clicked
-
-    def __init__(self, id, avatar, name, last_message, time):
-        super().__init__()
-        self.id = id
-        self.setFixedHeight(70)
-        self.setObjectName("chat-list-item")
-        self.setMouseTracking(True)
-        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
-
-        # Create color objects for different states
-        self.normal_color = "#1f1e1d"
-        self.hover_color = "#333333"
-        self.active_color = "#262624"
-
-        self.setStyleSheet(f"background-color: {self.normal_color}; border-radius: 14px;")
-
-        # Track hover and active states
-        self.is_hovered = False
-        self.is_active = False
-
-        # Set up the layout
-        self.main_layout = QtWidgets.QHBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 0, 0, 0)
-        self.main_layout.setSpacing(0)
-
-        self.avatar = RoundedAvatar(avatar)
-
-        # Add avatar container to layout
-        self.main_layout.addWidget(self.avatar)
-
-        self.name_part = QtWidgets.QVBoxLayout()
-
-        self.name_time_part = QtWidgets.QHBoxLayout()
-        self.name_time_part.setContentsMargins(0, 15, 0, 0)
-        self.name_time_part.setSpacing(0)
-        self.name_time_part.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-
-        self.name_label = QtWidgets.QLabel(name)
-        self.name_label.setStyleSheet(
-            "font-weight: bold; background-color: transparent; border-color: transparent; color: white"
-        )
-        self.name_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.name_label.setContentsMargins(10, 0, 0, 0)
-
-        self.time_label = QtWidgets.QLabel(time)
-        self.time_label.setStyleSheet(
-            "font-size: 12px; color: #888; background-color: transparent; border-color: transparent"
-        )
-
-        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self.time_label.setContentsMargins(10, 0, 10, 0)
-
-        self.name_time_part.addWidget(self.name_label)
-        self.name_time_part.addWidget(self.time_label)
-
-        self.last_message_label = QtWidgets.QLabel(last_message)
-        self.last_message_label.setContentsMargins(10, 0, 0, 15)
-        self.last_message_label.setStyleSheet(
-            "font-size: 14px; color: #ccc; background-color: transparent; border-color: transparent"
-        )
-
-        self.name_part.addLayout(self.name_time_part)
-        self.name_part.addWidget(self.last_message_label)
-
-        self.main_layout.addLayout(self.name_part)
-
-    def update_background(self, color, active=False):
-        """Update the background color using palette"""
-        if active:
-            self.setStyleSheet(f"background-color: {color}; border-radius: 0px")
-        else:
-            self.setStyleSheet(f"background-color: {color}; border-radius: 14px;")
-
-    def enterEvent(self, event):
-        """Handle mouse enter event"""
-        if not self.is_active:  # Only change color if not active
-            self.is_hovered = True
-            self.update_background(self.hover_color)
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        """Handle mouse leave event"""
-        if not self.is_active:  # Only change color if not active
-            self.is_hovered = False
-            self.update_background(self.normal_color)
-        super().leaveEvent(event)
-
-    def mousePressEvent(self, event):
-        """Handle mouse press event"""
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit(self)  # Emit signal with self as argument
-        super().mousePressEvent(event)
-
-    def contextMenuEvent(self, event):
-        context_menu = QtWidgets.QMenu(self)
-        context_menu.addAction(qta.icon("mdi.archive-arrow-down-outline", color="white"), "Archieve")
-        context_menu.addAction(qta.icon("mdi.pin-outline", color="white"), "Pin")
-        context_menu.addAction(qta.icon("mdi.volume-mute", color="white"), "Mute Notifications")
-        context_menu.addAction(qta.icon("mdi.playlist-remove", color="white"), "Clear History")
-        context_menu.addSeparator()
-
-        button = QtWidgets.QPushButton(qta.icon("mdi.delete", color="red"), "Delete")
-
-        delete_chat_action = QWidgetAction(context_menu)
-        delete_chat_action.setDefaultWidget(button)
-        context_menu.addAction(delete_chat_action)
-
-        context_menu.setStyleSheet(context_menu_style)
-        action = context_menu.exec_(event.globalPos())
-
-    def set_active(self, active):
-        """Set this item as active/inactive"""
-        self.is_active = active
-        if active:
-            self.is_hovered = False
-            self.update_background(self.active_color, active=True)
-        else:
-            if self.is_hovered:
-                self.update_background(self.hover_color)
-            else:
-                self.update_background(self.normal_color)
 
 
 class ChatList(QtWidgets.QWidget):
     chat_selected = Signal(str)
     settings_clicked = Signal()
+    chat_searched = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -172,11 +43,14 @@ class ChatList(QtWidgets.QWidget):
         self.search_chat_input.setStyleSheet(
             "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; color: white"
         )
+        self.search_chat_input.textChanged.connect(self.search_chat)
 
         self.connecting_label = QtWidgets.QLabel("Connecting...")
         self.connecting_label.setFixedHeight(60)
         self.connecting_label.setContentsMargins(10, 0, 0, 0)
-        self.connecting_label.setStyleSheet("background-color: #30302e; border-radius: 10px; color: white; border: 0.5px solid grey; margin: 10;")
+        self.connecting_label.setStyleSheet(
+            "background-color: #30302e; border-radius: 10px; color: white; border: 0.5px solid grey; margin: 10;"
+        )
         self.connecting_label.setVisible(False)
 
         self.settings_button = IconedButton("mdi.cog-outline", "Settings", color="white", height=70, margin=5)
@@ -190,11 +64,12 @@ class ChatList(QtWidgets.QWidget):
 
         # Sidebar items
         self.chat_items = []
+        self.result_items = []
 
     def load_chats(self, chats: List[ChatType]):
         self.chat_items = []
         for chat in chats:
-            item = ChatItem(chat.id, chat.avatar, chat.name, chat.last_message, chat.time)
+            item = ChatListItem(chat.id, chat.avatar, chat.name, chat.last_message, chat.time)
             item.clicked.connect(self.handle_item_click)
             self.chat_items.append(item)
             self.chats_layout.addWidget(self.chat_items[-1])
@@ -227,3 +102,26 @@ class ChatList(QtWidgets.QWidget):
     def handle_disconnected(self):
         self.connecting_label.setVisible(True)
         self.search_chat_input.setVisible(False)
+
+    def search_chat(self):
+        query = self.search_chat_input.text()
+        if query:
+            self.chat_searched.emit(query)
+        else:
+            self.clear_chat_layout()
+            for item in self.chat_items:
+                self.chats_layout.addWidget(item)
+
+    def clear_chat_layout(self):
+        while self.chats_layout.count():
+            item = self.chats_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+
+    def load_search_results(self, results: List[User]):
+        self.clear_chat_layout()
+        for result in results:
+            item = ResultItem(result.id, result.avatar, result.username, result.email)
+            self.result_items.append(item)
+            self.chats_layout.addWidget(self.result_items[-1])

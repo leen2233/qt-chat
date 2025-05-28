@@ -16,7 +16,7 @@ class MessageType:
     sender: str
     time: str
     status: Status = Status.SENDING
-    
+
     reply_to: Optional["MessageType"] = None
 
 
@@ -40,3 +40,12 @@ class ChatType:
     username: str
     stats: StatType
     messages: List[MessageType]
+
+
+@dataclass
+class User:
+    id: str
+    username: str
+    email: str
+    full_name: Optional[str]
+    avatar: Optional[str] = None

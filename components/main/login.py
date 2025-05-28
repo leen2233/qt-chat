@@ -1,14 +1,15 @@
 from PySide6 import QtWidgets
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSettings, Qt
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSettings, Qt, Signal
 
 from lib.conn import Conn
 from styles import Colors
 
 
 class Login(QtWidgets.QMainWindow):
-    def __init__(self, host, port, mainWindow, parent=None):
+    login_successful = Signal()
+
+    def __init__(self, host, port, parent=None):
         super().__init__(parent=parent)
-        self.mainWindow = mainWindow
 
         self.conn = Conn(host, port)
         self.conn.connected_callback = self.on_connect
@@ -232,9 +233,8 @@ class Login(QtWidgets.QMainWindow):
             settings.setValue("access_token", access_token)
             settings.setValue("refresh_token", refresh_token)
 
+            self.login_successful.emit()
             self.destroy()
-            window = self.mainWindow()
-            window.show()
 
         else:
             errors = data.get("data", {})
