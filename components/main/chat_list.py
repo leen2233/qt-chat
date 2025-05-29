@@ -3,16 +3,17 @@ from typing import List
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt, Signal
 
-from chat_types import ChatType, User
+from chat_types import ChatType, UserType
 from components.ui.chat_list.chat_list_item import ChatListItem
 from components.ui.chat_list.result_item import ResultItem
 from components.ui.iconed_button import IconedButton
+from utils.time import format_timestamp
 
 
 class ChatList(QtWidgets.QWidget):
     chat_selected = Signal(str)
     settings_clicked = Signal()
-    chat_searched = Signal(str)
+    send_data = Signal(dict)
 
     def __init__(self):
         super().__init__()
@@ -69,7 +70,8 @@ class ChatList(QtWidgets.QWidget):
     def load_chats(self, chats: List[ChatType]):
         self.chat_items = []
         for chat in chats:
-            item = ChatListItem(chat.id, chat.avatar, chat.name, chat.last_message, chat.time)
+            updated_at_str = format_timestamp(chat.updated_at)
+            item = ChatListItem(chat.id, "", chat.user.username, chat.last_message, updated_at_str)
             item.clicked.connect(self.handle_item_click)
             self.chat_items.append(item)
             self.chats_layout.addWidget(self.chat_items[-1])
@@ -106,7 +108,7 @@ class ChatList(QtWidgets.QWidget):
     def search_chat(self):
         query = self.search_chat_input.text()
         if query:
-            self.chat_searched.emit(query)
+            self.send_data.emit({"action": "search_users", "data": {"q": query}})
         else:
             self.clear_chat_layout()
             for item in self.chat_items:
@@ -119,9 +121,13 @@ class ChatList(QtWidgets.QWidget):
             if widget is not None:
                 widget.setParent(None)
 
-    def load_search_results(self, results: List[User]):
+    def request_load_chat(self, result_item):
+        self.send_data.emit({"action": "get_messages", "data": {"user_id": result_item.id}})
+
+    def load_search_results(self, results: List[UserType]):
         self.clear_chat_layout()
         for result in results:
-            item = ResultItem(result.id, result.avatar, result.username, result.email)
+            item = ResultItem(result.id, "", result.username, result.email)
+            item.clicked.connect(self.request_load_chat)
             self.result_items.append(item)
             self.chats_layout.addWidget(self.result_items[-1])

@@ -6,15 +6,15 @@ from dotenv import load_dotenv
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
 
-from chat_types import User
+from chat_types import MessageType
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
 from components.main.login import Login
 from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
-from data import CHAT_LIST
 from lib.config import ConfigManager
 from lib.conn import Conn
+from utils.action_handler import ActionHandler
 
 load_dotenv()
 
@@ -25,6 +25,9 @@ PORT = int(os.getenv("PORT", "9090"))
 class ChatApp(QtWidgets.QMainWindow):
     show_login_window = Signal()
     search_results_received = Signal(list)
+    fetched_chats = Signal(list)
+    fetched_messages = Signal(list)
+    new_message = Signal(MessageType)
 
     def __init__(self):
         super().__init__()
@@ -38,6 +41,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.conn.on_message_callback = self.on_message
 
         self.connected = False
+        self.chats = []
 
         self.selected_chat = None
         self.sidebar_opened = False
@@ -68,11 +72,12 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list = ChatList()
         self.chat_list.chat_selected.connect(self.chat_selected)
         self.chat_list.settings_clicked.connect(self.open_settings)
-        self.chat_list.chat_searched.connect(self.search_chat)
+        self.chat_list.send_data.connect(self.send_data)
 
         # Main chat area
         self.chat_area = ChatBox()
         self.chat_area.sidebar_toggled_signal.connect(self.toggle_sidebar)
+        self.chat_area.message_sent.connect(self.send_message)
 
         self.splitter.addWidget(self.chat_list)
         self.splitter.addWidget(self.chat_area)
@@ -84,12 +89,14 @@ class ChatApp(QtWidgets.QMainWindow):
         self.resize(1000, 600)
 
         self.setup_shortcuts()
-        self.chat_list.load_chats(CHAT_LIST)
 
         if self.config.get("ui", "font", ""):
             self.apply_font(self.config.get("ui", "font"))
 
         self.search_results_received.connect(self.chat_list.load_search_results)
+        self.fetched_chats.connect(self.chat_list.load_chats)
+        self.fetched_messages.connect(self.chat_area.load_messages)
+        self.new_message.connect(self.chat_area.add_message)
         self.conn.start()
 
     def setup_shortcuts(self):
@@ -99,33 +106,34 @@ class ChatApp(QtWidgets.QMainWindow):
         ctrlShiftTab.activated.connect(self.select_previous_chat)
 
     def select_next_chat(self):
-        for index, chat in enumerate(CHAT_LIST):
+        for index, chat in enumerate(self.chats):
             if chat == self.selected_chat:
-                if index == len(CHAT_LIST) - 1:
-                    self.chat_selected(CHAT_LIST[0].id)
+                if index == len(self.chats) - 1:
+                    self.chat_selected(self.chats[0].id)
                 else:
-                    self.chat_selected(CHAT_LIST[index + 1].id)
+                    self.chat_selected(self.chats[index + 1].id)
                 break
 
     def select_previous_chat(self):
-        for index, chat in enumerate(CHAT_LIST):
+        for index, chat in enumerate(self.chats):
             if chat == self.selected_chat:
                 if index == 0:
-                    self.chat_selected(CHAT_LIST[-1].id)
+                    self.chat_selected(self.chats[-1].id)
                 else:
-                    self.chat_selected(CHAT_LIST[index - 1].id)
+                    self.chat_selected(self.chats[index - 1].id)
                 break
 
     def chat_selected(self, chat_id):
-        chat_id = int(chat_id)
-        for chat in CHAT_LIST:
+        for chat in self.chats:
             if chat.id == chat_id:
                 self.selected_chat = chat
                 self.chat_list.set_active_item_by_id(chat.id)
-                self.chat_area.load_messages(chat.messages)
                 self.chat_area.change_chat_user(chat)
                 if self.sidebar_opened:
                     self.sidebar.change_chat(chat)
+
+                data = {"action": "get_messages", "data": {"chat_id": chat.id}}
+                self.conn.send_data(data)
 
     def sidebar_closed(self, state):
         self.sidebar_opened = False
@@ -176,8 +184,11 @@ class ChatApp(QtWidgets.QMainWindow):
             self.updateGeometry()
             self.update()
 
-    def search_chat(self, query: str):
-        data = {"action": "search_users", "data": {"q": query}}
+    def send_message(self, text):
+        data = {"action": "new_message", "data": {"chat_id": self.selected_chat.id, "text": text}}
+        self.send_data(data)
+
+    def send_data(self, data):
         self.conn.send_data(data)
 
     def resizeEvent(self, event):
@@ -194,26 +205,11 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list.handle_disconnected()
 
     def on_message(self, data):
-        if data.get("action") == "authenticate" and data.get("success") is False:
-            data = {"action": "refresh_access_token", "data": {"refresh_token": self.refresh_token}}
-            self.conn.send_data(data)
-        elif data.get("action") == "refresh_access_token":
-            if data.get("success") is False or not data.get("data", {}).get("access_token"):
-                self.settings.setValue("refresh_token", None)
-                self.settings.setValue("access_token", None)
-                self.show_login_window.emit()
-                self.destroy()
-            else:
-                self.access_token = data.get("data", {}).get("access_token")
-                self.settings.setValue("access_token", self.access_token)
-                data = {"action": "authenticate", "data": {"access_token": self.access_token}}
-                self.conn.send_data(data)
-        elif data.get("action") == "search_users":
-            print("loading")
-            results = data.get("data", {}).get("results")
-            results = [User(**user) for user in results]
-            print(results)
-            self.search_results_received.emit(results)
+        ActionHandler(data, self).handle()
+
+    def on_authenticate(self):
+        data = {"action": "get_chats"}
+        self.conn.send_data(data)
 
     def closeEvent(self, event) -> None:
         self.conn.stop()

@@ -9,6 +9,7 @@ from chat_types import ChatType
 from components.ui.iconed_button import IconedButton
 from components.ui.rounded_avatar import RoundedAvatar
 from styles import Colors
+from utils.time import format_timestamp
 
 
 class Divider(QtWidgets.QWidget):
@@ -58,18 +59,18 @@ class Sidebar(QtWidgets.QWidget):
         username_time_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_time_layout.setSpacing(0)
 
-        self.name = QtWidgets.QLabel(chat.name if chat else "")
+        self.name = QtWidgets.QLabel(chat.user.username if chat else "")
         self.name.setStyleSheet("font-size: 20px; color: white;")
-        self.time = QtWidgets.QLabel(chat.time if chat else "")
+        self.time = QtWidgets.QLabel(format_timestamp(chat.updated_at) if chat else "")
         if chat:
-            if chat.time == "online":
+            if chat.user.is_online:
                 self.time.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
             else:
                 self.time.setStyleSheet("color: grey; font-size: 14px")
         username_time_layout.addWidget(self.name)
         username_time_layout.addWidget(self.time)
 
-        self.avatar = RoundedAvatar(avatar_url=chat.avatar if chat else "", size=(60, 60))
+        self.avatar = RoundedAvatar(avatar_url=chat.user.avatar if chat else "", size=(60, 60))
         user_info_layout.addWidget(self.avatar)
         user_info_layout.addLayout(username_time_layout)
 
@@ -81,7 +82,7 @@ class Sidebar(QtWidgets.QWidget):
         icon.setPixmap(qta.icon("ri.contacts-book-2-fill", color="white").pixmap(40, 40))
         phone_number_description_layout = QtWidgets.QVBoxLayout()
         phone_number_description_layout.setSpacing(0)
-        self.phone_number = QtWidgets.QLabel(chat.phone_number if chat else "")
+        self.phone_number = QtWidgets.QLabel(chat.user.email if chat else "")
         self.phone_number.setStyleSheet("font-size: 14px; color: white")
         self.phone_number.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         description = QtWidgets.QLabel("Mobile")
@@ -100,7 +101,7 @@ class Sidebar(QtWidgets.QWidget):
         icon.setPixmap(qta.icon("mdi6.information-outline", color="white").pixmap(40, 40))
         username_description_layout = QtWidgets.QVBoxLayout()
         username_description_layout.setSpacing(0)
-        self.username = QtWidgets.QLabel("@" + chat.username if chat else "")
+        self.username = QtWidgets.QLabel("@" + chat.user.username if chat else "")
         self.username.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.username.setStyleSheet(f"font-size: 14px; color: {Colors.PRIMARY}")
         description = QtWidgets.QLabel("Username")
@@ -113,22 +114,22 @@ class Sidebar(QtWidgets.QWidget):
 
         self.stats = QtWidgets.QVBoxLayout()
         self.stats.setSpacing(0)
-        if chat:
-            if chat.stats.photos:
-                self.stats.addWidget(
-                    IconedButton(
-                        "mdi.google-photos",
-                        f"{chat.stats.photos} Photos",
-                    )
-                )
-            if chat.stats.videos:
-                self.stats.addWidget(IconedButton("fa5s.video", f"{chat.stats.videos} Videos"))
-            if chat.stats.files:
-                self.stats.addWidget(IconedButton("fa5.file-alt", f"{chat.stats.files} Files"))
-            if chat.stats.links:
-                self.stats.addWidget(IconedButton("fa5s.link", f"{chat.stats.links} Links"))
-            if chat.stats.voices:
-                self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
+        # if chat:
+        #     if chat.stats.photos:
+        #         self.stats.addWidget(
+        #             IconedButton(
+        #                 "mdi.google-photos",
+        #                 f"{chat.stats.photos} Photos",
+        #             )
+        #         )
+        #     if chat.stats.videos:
+        #         self.stats.addWidget(IconedButton("fa5s.video", f"{chat.stats.videos} Videos"))
+        #     if chat.stats.files:
+        #         self.stats.addWidget(IconedButton("fa5.file-alt", f"{chat.stats.files} Files"))
+        #     if chat.stats.links:
+        #         self.stats.addWidget(IconedButton("fa5s.link", f"{chat.stats.links} Links"))
+        #     if chat.stats.voices:
+        #         self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
 
         actions = QtWidgets.QVBoxLayout()
         actions.setSpacing(2)
@@ -161,47 +162,47 @@ class Sidebar(QtWidgets.QWidget):
         QtCore.QTimer.singleShot(0, self.show_animation)
 
     def change_chat(self, chat: ChatType):
-        self.avatar.change_source(chat.avatar)
-        self.name.setText(chat.name)
-        self.time.setText(chat.time)
+        self.avatar.change_source(chat.user.avatar)
+        self.name.setText(chat.user.username)
+        self.time.setText(format_timestamp(chat.updated_at))
 
-        if chat.time == "online":
+        if chat.user.is_online:
             self.time.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
         else:
             self.time.setStyleSheet("color: grey; font-size: 14px")
 
-        self.phone_number.setText(chat.phone_number)
-        self.username.setText("@" + chat.username)
+        self.phone_number.setText(chat.user.email)
+        self.username.setText("@" + chat.user.username)
         while self.stats.count() > 0:
             item = self.stats.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
-        if chat.stats.photos:
-            self.stats.addWidget(IconedButton("mdi.google-photos", f"{chat.stats.photos} Photos"))
-        if chat.stats.videos:
-            self.stats.addWidget(
-                IconedButton(
-                    "fa5s.video",
-                    f"{chat.stats.videos} Videos",
-                )
-            )
-        if chat.stats.files:
-            self.stats.addWidget(
-                IconedButton(
-                    "fa5.file-alt",
-                    f"{chat.stats.files} Files",
-                )
-            )
-        if chat.stats.links:
-            self.stats.addWidget(
-                IconedButton(
-                    "fa5s.link",
-                    f"{chat.stats.links} Links",
-                )
-            )
-        if chat.stats.voices:
-            self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
+        # if chat.stats.photos:
+        #     self.stats.addWidget(IconedButton("mdi.google-photos", f"{chat.stats.photos} Photos"))
+        # if chat.stats.videos:
+        #     self.stats.addWidget(
+        #         IconedButton(
+        #             "fa5s.video",
+        #             f"{chat.stats.videos} Videos",
+        #         )
+        #     )
+        # if chat.stats.files:
+        #     self.stats.addWidget(
+        #         IconedButton(
+        #             "fa5.file-alt",
+        #             f"{chat.stats.files} Files",
+        #         )
+        #     )
+        # if chat.stats.links:
+        #     self.stats.addWidget(
+        #         IconedButton(
+        #             "fa5s.link",
+        #             f"{chat.stats.links} Links",
+        #         )
+        #     )
+        # if chat.stats.voices:
+        #     self.stats.addWidget(IconedButton("ri.voiceprint-line", f"{chat.stats.voices} Voices"))
 
     def close(self) -> bool:
         self.sidebar_closed.emit("closed")

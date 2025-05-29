@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor
 
 from chat_types import MessageType
 from styles import Colors, build_reply_to_label_style, context_menu_style
+from utils.time import format_timestamp
 
 
 class HighlightableWidget(QtWidgets.QWidget):
@@ -88,12 +89,11 @@ class Message(HighlightableWidget):
         super().__init__()
         self.message_type = message
         self.message = message.text
-        self.author = message.sender
         self.time = message.time
-        self.is_mine = message.sender == "me"
+        self.is_mine = message.is_mine
 
-        self.previous = self.author == previous
-        self.next = self.author == next
+        self.previous = previous
+        self.next = next
 
         self.set_width = False
 
@@ -159,7 +159,7 @@ class Message(HighlightableWidget):
         self.time_status_layout.setSpacing(0)
         self.time_status_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.time_label = QtWidgets.QLabel(self.time)
+        self.time_label = QtWidgets.QLabel(format_timestamp(self.time))
         self.time_label.setStyleSheet(
             f"font-size: 10px; color: {'white' if self.is_mine else 'grey'}; padding: 0; margin: 0; position: absolute; left: 10px;"
         )
@@ -168,7 +168,7 @@ class Message(HighlightableWidget):
 
         self.time_status_layout.addWidget(self.time_label)
 
-        if self.author == "me":
+        if self.is_mine:
             self.status = QtWidgets.QLabel()
             pixmap = None
             if self.message_type.status == MessageType.Status.SENDING:
@@ -215,7 +215,7 @@ class Message(HighlightableWidget):
             self.time_status_layout.removeWidget(self.time_label)
             self.time_label.setParent(self.text)
             self.time_label.setFixedWidth(self.time_label.width())
-            if self.author == "me":
+            if self.is_mine:
                 self.time_status_layout.removeWidget(self.status)
                 self.status.setParent(self.text)
                 # self.status.setFixedWidth(self.status.width() + 20)
@@ -226,7 +226,7 @@ class Message(HighlightableWidget):
 
             time_label_width = self.time_label.sizeHint().width()
             if cursor_rect.x() < self.message_box.width() - 100:
-                if self.author == "me":
+                if self.is_mine:
                     x = self.message_box.width() - time_label_width - 35
                 else:
                     x = self.message_box.width() - time_label_width - 15
@@ -234,7 +234,7 @@ class Message(HighlightableWidget):
 
                 self.time_label.move(x, y)
                 self.time_label.show()
-                if self.author == "me":
+                if self.is_mine:
                     self.status.move(x + time_label_width, y)
                     self.status.show()
 

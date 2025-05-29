@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 
 @dataclass
@@ -13,9 +13,9 @@ class MessageType:
 
     id: int
     text: str
-    sender: str
-    time: str
-    status: Status = Status.SENDING
+    is_mine: bool
+    time: float
+    status: Status | str = Status.SENDING
 
     reply_to: Optional["MessageType"] = None
 
@@ -30,22 +30,18 @@ class StatType:
 
 
 @dataclass
-class ChatType:
-    id: int
-    avatar: str
-    name: str
-    last_message: str
-    time: str
-    phone_number: str
+class UserType:
     username: str
-    stats: StatType
-    messages: List[MessageType]
+    email: str
+    id: str
+    full_name: Optional[str] = None
+    avatar: Optional[str] = None
+    is_online: bool = False
 
 
 @dataclass
-class User:
+class ChatType:
     id: str
-    username: str
-    email: str
-    full_name: Optional[str]
-    avatar: Optional[str] = None
+    last_message: str
+    updated_at: float
+    user: UserType

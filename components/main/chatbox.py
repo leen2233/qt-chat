@@ -1,4 +1,3 @@
-import random
 from typing import List
 
 import qtawesome as qta
@@ -12,12 +11,13 @@ from components.ui.message import Message
 from components.ui.rounded_avatar import RoundedAvatar
 from components.ui.text_edit import TextEdit
 from components.ui.typing_indicator import TypingIndicator
-from data import CHAT_LIST
 from styles import Colors, replying_to_label_style
+from utils.time import format_timestamp
 
 
 class ChatBox(QtWidgets.QWidget):
     sidebar_toggled_signal = Signal(bool)
+    message_sent = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -209,27 +209,7 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
-            previous_message = None
-            message_type = MessageType(
-                id=random.randint(1, 1000), text=text, sender="me", time="now", reply_to=self.reply_to_message
-            )
-            if self.reply_opened:
-                self.close_reply()
-            if self.chat:
-                for chat in CHAT_LIST:
-                    if chat.id == self.chat.id:
-                        previous_message = chat.messages[-1] if chat.messages else None
-                        chat.messages.append(message_type)
-                        break
-
-            if previous_message:
-                for index in range(self.messages_container.count()):
-                    item = self.messages_container.itemAt(index)
-                    if item and item.widget() and item.widget().message_type.id == previous_message.id:
-                        self.scroll_area.ensureWidgetVisible(item.widget())
-                        item.widget().update_previous_next(next="me")
-            sender = previous_message.sender if previous_message else None
-            self.add_message(message_type, previous=sender)
+            self.message_sent.emit(text)
             self.chat_input.setText("")
 
     def load_messages(self, messages: List[MessageType]):
@@ -242,18 +222,18 @@ class ChatBox(QtWidgets.QWidget):
             previous = None
             next = None
             if index != 0:
-                next = messages[index - 1].sender
+                next = messages[index - 1].is_mine
             if index < len(messages) - 1:
-                previous = messages[index + 1].sender
+                previous = messages[index + 1].is_mine
             self.add_message(message, previous, next)
 
         QTimer.singleShot(100, self.scroll_to_bottom)
 
     def change_chat_user(self, chat: ChatType):
-        self.avatar.change_source(chat.avatar)
-        self.username.setText(chat.name)
-        self.last_seen.setText(chat.time)
-        if chat.time == "online":
+        self.avatar.change_source(chat.user.avatar)
+        self.username.setText(chat.user.username)
+        self.last_seen.setText(format_timestamp(chat.updated_at))
+        if chat.user.is_online == "online":
             self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
         else:
             self.last_seen.setStyleSheet("color: grey; font-size: 14px")
