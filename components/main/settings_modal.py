@@ -20,7 +20,7 @@ from styles import Colors
 class SettingsItem(QWidget):
     clicked = Signal()
 
-    def __init__(self, icon_name, text, value):
+    def __init__(self, icon_name, text, value=None, color="white"):
         super().__init__()
         self.setFixedHeight(40)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -36,15 +36,17 @@ class SettingsItem(QWidget):
         self.normal_color = "transparent"
 
         self.icon = QLabel()
-        self.icon.setPixmap(qta.icon(icon_name, color="white").pixmap(24, 24))
+        self.icon.setPixmap(qta.icon(icon_name, color=color).pixmap(24, 24))
         self.text = QLabel(text)
-        self.text.setStyleSheet("color: white; font-size: 14px")
-        self.current_value = QLabel(value)
-        self.current_value.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
+        self.text.setStyleSheet(f"color: {color}; font-size: 14px")
         self.main_layout.addWidget(self.icon)
         self.main_layout.addWidget(self.text)
         self.main_layout.addStretch()
-        self.main_layout.addWidget(self.current_value)
+
+        if value:
+            self.current_value = QLabel(value)
+            self.current_value.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
+            self.main_layout.addWidget(self.current_value)
 
     def update_background(self, color):
         """Update the background color using palette"""
@@ -194,6 +196,7 @@ class FontSettings(QFrame):
 
 class SettingsModal(QFrame):
     font_applied = Signal(str)
+    logout_triggered = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -209,17 +212,20 @@ class SettingsModal(QFrame):
         self.setMinimumHeight(600)
         self.setMinimumWidth(300)
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setContentsMargins(0, 0, 0, 10)
 
         self.header = Header("Settings")
         self.header.close_clicked.connect(self.close)
 
         fonts_button = SettingsItem("mdi.format-font", "Fonts", "Default")
         fonts_button.clicked.connect(self.open_font_settings)
+        logout_button = SettingsItem("mdi.logout-variant", "Logout", color="#cc3f3f")
+        logout_button.clicked.connect(self.logout)
 
         self.main_layout.addWidget(self.header)
         self.main_layout.addWidget(fonts_button)
         self.main_layout.addStretch()
+        self.main_layout.addWidget(logout_button)
 
     def show(self):
         parent_rect = self.parent().rect()
@@ -261,3 +267,6 @@ class SettingsModal(QFrame):
         frame.close_clicked.connect(self.close)
         frame.font_applied.connect(lambda font: self.font_applied.emit(font))
         frame.show()
+
+    def logout(self):
+        self.logout_triggered.emit()

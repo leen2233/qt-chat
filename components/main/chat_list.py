@@ -72,7 +72,7 @@ class ChatList(QtWidgets.QWidget):
         for chat in chats:
             updated_at_str = format_timestamp(chat.updated_at)
             item = ChatListItem(chat.id, "", chat.user.username, chat.last_message, updated_at_str)
-            item.clicked.connect(self.handle_item_click)
+            item.clicked.connect(lambda item: self.handle_item_click(chat_item=item))
             self.chat_items.append(item)
             self.chats_layout.addWidget(self.chat_items[-1])
 
@@ -80,9 +80,13 @@ class ChatList(QtWidgets.QWidget):
             self.set_active_item(self.chat_items[0])
             self.chat_selected.emit(str(self.chat_items[0].id))
 
-    def handle_item_click(self, item):
-        self.set_active_item(item)
-        self.chat_selected.emit(str(item.id))
+    def handle_item_click(self, result_item = None, chat_item = None):
+        item = result_item or chat_item
+        if item:
+            self.set_active_item(item)
+            self.chat_selected.emit(str(item.id))
+            self.request_load_chat(result_item=result_item, chat_item=chat_item)
+
 
     def set_active_item_by_id(self, chat_id):
         for item in self.chat_items:
@@ -121,13 +125,13 @@ class ChatList(QtWidgets.QWidget):
             if widget is not None:
                 widget.setParent(None)
 
-    def request_load_chat(self, result_item):
-        self.send_data.emit({"action": "get_messages", "data": {"user_id": result_item.id}})
+    def request_load_chat(self, result_item = None, chat_item = None):
+        self.send_data.emit({"action": "get_messages", "data": {"user_id": result_item.id if result_item else None, "chat_id": chat_item.id if chat_item else None}})
 
     def load_search_results(self, results: List[UserType]):
         self.clear_chat_layout()
         for result in results:
             item = ResultItem(result.id, "", result.username, result.email)
-            item.clicked.connect(self.request_load_chat)
+            item.clicked.connect(lambda item: self.handle_item_click(result_item=item))
             self.result_items.append(item)
             self.chats_layout.addWidget(self.result_items[-1])

@@ -21,6 +21,7 @@ class ResultItem(QtWidgets.QWidget):
         # Create color objects for different states
         self.normal_color = "#1f1e1d"
         self.hover_color = "#333333"
+        self.active_color = "#262624"
 
         self.setStyleSheet(f"background-color: {self.normal_color}; border-radius: 14px;")
 
@@ -57,9 +58,12 @@ class ResultItem(QtWidgets.QWidget):
 
         self.main_layout.addLayout(self.name_part)
 
-    def update_background(self, color):
+    def update_background(self, color, active=False):
         """Update the background color using palette"""
-        self.setStyleSheet(f"background-color: {color}; border-radius: 14px;")
+        if active:
+            self.setStyleSheet(f"background-color: {color}; border-radius: 0px")
+        else:
+            self.setStyleSheet(f"background-color: {color}; border-radius: 14px;")
 
     def enterEvent(self, event):
         """Handle mouse enter event"""
@@ -78,6 +82,19 @@ class ResultItem(QtWidgets.QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self)  # Emit signal with self as argument
         super().mousePressEvent(event)
+
+    def set_active(self, active):
+        """Set this item as active/inactive"""
+        self.is_active = active
+        if active:
+            self.is_hovered = False
+            self.update_background(self.active_color, active=True)
+        else:
+            if self.is_hovered:
+                self.update_background(self.hover_color)
+            else:
+                self.update_background(self.normal_color)
+
 
     # def contextMenuEvent(self, event):
     #     context_menu = QtWidgets.QMenu(self)

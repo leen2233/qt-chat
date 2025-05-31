@@ -156,8 +156,15 @@ class ChatApp(QtWidgets.QMainWindow):
     def open_settings(self):
         self.settings_modal = SettingsModal(parent=self.central_widget)
         self.settings_modal.font_applied.connect(self.apply_font)
+        self.settings_modal.logout_triggered.connect(self.logout)
         self.settings_modal.move_to_center()
         self.settings_modal.show()
+
+    def logout(self):
+        self.settings.setValue("refresh_token", None)
+        self.settings.setValue("access_token", None)
+        self.show_login_window.emit()
+        self.destroy()
 
     def apply_font(self, font_name):
         # Create a font with the selected name
