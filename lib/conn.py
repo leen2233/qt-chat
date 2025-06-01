@@ -1,66 +1,56 @@
+import asyncio
 import json
-import socket
-import time
 from threading import Thread
 from typing import Callable, Optional
+
+import websockets
 
 
 class Conn:
     def __init__(self, host: str, port: int, access_token: Optional[str] = None):
-        self.host = host
-        self.port = port
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.settimeout(1.0)
+        self.uri = f"ws://{host}:{port}/path"
+        self.websocket = None
         self.access_token = access_token
-
-        self.thread = None
-        self._running = True
 
         self.connected_callback: Optional[Callable] = None
         self.disconnected_callback: Optional[Callable] = None
         self.on_message_callback: Optional[Callable] = None
 
-    def connect(self):
-        self.server.connect((self.host, self.port))
-        if self.connected_callback:
-            self.connected_callback()
-        print("access token", self.access_token)
-        if self.access_token:
-            data = {"action": "authenticate", "data": {"access_token": self.access_token}}
-            self.send_data(data)
+        self.loop = asyncio.new_event_loop()
+        self.thread = Thread(target=self._start_loop)
+        self._running = True
 
-    def handle_disconnect(self):
-        if self.disconnected_callback:
-            self.disconnected_callback()
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self.connect())
 
-        print("trying again", self._running)
-        if self._running:
-            self.connect_with_retry()
-
-    def loop(self):
+    async def connect(self):
         while self._running:
             try:
-                message = self.server.recv(2048)
-                message = self._decode(message)
-                if message:
-                    self.on_message(message)
-                else:
-                    self.handle_disconnect()
-                    break
-            except socket.timeout:  # Handle timeout
-                if not self._running:  # Check _running after timeout
-                    break
-                continue
-            except:
-                self.handle_disconnect()
-                break
+                async with websockets.connect(self.uri) as websocket:
+                    self.websocket = websocket
+                    if self.connected_callback:
+                        self.connected_callback()
 
-    def close(self):
-        self.server.close()
+                    if self.access_token:
+                        self.send_data({
+                            "action": "authenticate",
+                            "data": {"access_token": self.access_token}
+                        })
 
-    def send_message(self, message: str):
-        encoded = self._encode(message)
-        self.server.send(encoded)
+                    await self.listen()
+            except Exception as e:
+                print("Disconnected, retrying in 5 seconds...", e)
+                if self.disconnected_callback:
+                    self.disconnected_callback()
+                await asyncio.sleep(5)
+
+    async def listen(self):
+        try:
+            async for message in self.websocket:
+                self.on_message(message)
+        except Exception as e:
+            print("Error in listen:", e)
 
     def on_message(self, message: str):
         try:
@@ -70,34 +60,22 @@ class Conn:
         except json.JSONDecodeError:
             print("invalid json")
 
-    def send_data(self, body: dict):
-        data = json.dumps(body)
-        data = self._encode(data)
-        self.server.send(data)
+    async def _send(self, message: str):
+        if self.websocket:
+            await self.websocket.send(message)
 
-    def connect_with_retry(self):
-        while self._running:
-            try:
-                self.connect()
-                self._running = True
-                self.loop()
-                break
-            except:
-                print("Couldn't connect to server, retrying in 5 seconds...")
-                time.sleep(5)
+    def send_data(self, body: dict):
+        message = json.dumps(body)
+        self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self._send(message)))
 
     def start(self):
-        if self.disconnected_callback:
-            self.disconnected_callback()
-        self.thread = Thread(target=self.connect_with_retry)
         self.thread.start()
 
     def stop(self):
         self._running = False
-        self.close()
-        if self.thread:
-            print(self._running, "eunning")
-            self.thread.join()
+        if self.websocket:
+            self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.websocket.close()))
+        self.thread.join()
 
     def _decode(self, text: bytes):
         return text.decode()
