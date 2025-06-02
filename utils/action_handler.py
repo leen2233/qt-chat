@@ -20,10 +20,7 @@ class ActionHandler:
 
     def refresh_access_token(self):
         if self.data.get("success") is False or not self.data.get("data", {}).get("access_token"):
-            self.window.settings.setValue("refresh_token", None)
-            self.window.settings.setValue("access_token", None)
-            self.window.show_login_window.emit()
-            self.window.destroy()
+            self.window.on_logout.emit()
         else:
             self.access_token = self.data.get("data", {}).get("access_token")
             self.window.settings.setValue("access_token", self.access_token)

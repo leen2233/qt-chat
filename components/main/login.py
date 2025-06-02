@@ -7,6 +7,7 @@ from styles import Colors
 
 class Login(QtWidgets.QMainWindow):
     login_successful = Signal()
+    on_login = Signal(dict)
 
     def __init__(self, host, port, parent=None):
         super().__init__(parent=parent)
@@ -192,6 +193,8 @@ class Login(QtWidgets.QMainWindow):
         layout.addWidget(self.signup_password_error)
         layout.addWidget(signup_button)
 
+        self.on_login.connect(self.login)
+
         return widget
 
     def switch_tab(self, index):
@@ -224,17 +227,20 @@ class Login(QtWidgets.QMainWindow):
         body = {"action": "sign_up", "data": {"username": username, "email": email, "password": password}}
         self.conn.send_data(body)
 
+    def login(self, data):
+        access_token = data.get("data", {}).get("access")
+        refresh_token = data.get("data", {}).get("refresh")
+
+        settings = QSettings("Veia Sp.", "Veia")
+        settings.setValue("access_token", access_token)
+        settings.setValue("refresh_token", refresh_token)
+
+        self.login_successful.emit()
+        self.destroy()
+
     def on_message(self, data):
         if data.get("success"):
-            access_token = data.get("data", {}).get("access")
-            refresh_token = data.get("data", {}).get("refresh")
-
-            settings = QSettings("Veia Sp.", "Veia")
-            settings.setValue("access_token", access_token)
-            settings.setValue("refresh_token", refresh_token)
-
-            self.login_successful.emit()
-            self.destroy()
+            self.on_login.emit(data)
 
         else:
             errors = data.get("data", {})

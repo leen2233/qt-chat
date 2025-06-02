@@ -7,8 +7,11 @@ import websockets
 
 
 class Conn:
-    def __init__(self, host: str, port: int, access_token: Optional[str] = None):
-        self.uri = f"ws://{host}:{port}/path"
+    def __init__(self, host: str, port: Optional[str], access_token: Optional[str] = None):
+        if port:
+            self.uri = f"ws://{host}:{port}/"
+        else:
+            self.uri = f"wss://{host}/"
         self.websocket = None
         self.access_token = access_token
 

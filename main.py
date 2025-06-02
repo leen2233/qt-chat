@@ -19,7 +19,7 @@ from utils.action_handler import ActionHandler
 load_dotenv()
 
 HOST = os.getenv("HOST", "")
-PORT = int(os.getenv("PORT", "9090"))
+PORT = os.getenv("PORT")
 
 
 class ChatApp(QtWidgets.QMainWindow):
@@ -28,6 +28,7 @@ class ChatApp(QtWidgets.QMainWindow):
     fetched_chats = Signal(list)
     fetched_messages = Signal(list)
     new_message = Signal(MessageType)
+    on_logout = Signal()
 
     def __init__(self):
         super().__init__()
@@ -97,6 +98,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.fetched_chats.connect(self.chat_list.load_chats)
         self.fetched_messages.connect(self.chat_area.load_messages)
         self.new_message.connect(self.chat_area.add_message)
+        self.on_logout.connect(self.logout)
         self.conn.start()
 
     def setup_shortcuts(self):
