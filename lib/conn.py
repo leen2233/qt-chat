@@ -79,9 +79,3 @@ class Conn:
         if self.websocket:
             self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.websocket.close()))
         self.thread.join()
-
-    def _decode(self, text: bytes):
-        return text.decode()
-
-    def _encode(self, text: str):
-        return text.encode()
