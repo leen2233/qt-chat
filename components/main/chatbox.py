@@ -40,9 +40,7 @@ class ChatBox(QtWidgets.QWidget):
         self.header_layout.setAlignment(Qt.AlignmentFlag.AlignJustify)
         self.header_layout.setContentsMargins(10, 0, 0, 0)
 
-        self.avatar = RoundedAvatar(
-            "https://fastly.picsum.photos/id/354/200/200.jpg?hmac=ykMwenrB5tcaT_UHlYwh2ZzAZ4Km48YOmwJTFCiodJ4"
-        )
+        self.avatar = RoundedAvatar("")
 
         self.username = QtWidgets.QLabel("John Doe")
         self.username.setStyleSheet("font-size: 16px")
@@ -231,7 +229,8 @@ class ChatBox(QtWidgets.QWidget):
 
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.user.avatar)
-        self.username.setText(chat.user.username)
+        display_name = (chat.user.full_name if chat.user.full_name else chat.user.username) if chat else ""
+        self.username.setText(display_name)
         self.last_seen.setText(format_timestamp(chat.updated_at))
         if chat.user.is_online == "online":
             self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")

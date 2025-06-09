@@ -1,11 +1,10 @@
-import os
 import sys
 from typing import Optional
 
-from dotenv import load_dotenv
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
 
+import env
 from chat_types import MessageType
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
@@ -15,11 +14,6 @@ from components.main.sidebar import Sidebar
 from lib.config import ConfigManager
 from lib.conn import Conn
 from utils.action_handler import ActionHandler
-
-load_dotenv()
-
-HOST = os.getenv("HOST", "")
-PORT = os.getenv("PORT")
 
 
 class ChatApp(QtWidgets.QMainWindow):
@@ -36,11 +30,12 @@ class ChatApp(QtWidgets.QMainWindow):
         self.settings = QSettings("Veia Sp.", "Veia")
         self.refresh_token = settings.value("refresh_token")
         self.access_token = settings.value("access_token")
-        self.conn = Conn(HOST, PORT, self.access_token)
+        self.conn = Conn(env.HOST, env.PORT, self.access_token)
         self.conn.connected_callback = self.on_connect
         self.conn.disconnected_callback = self.on_disconnect
         self.conn.on_message_callback = self.on_message
 
+        self.user = None
         self.connected = False
         self.chats = []
 
@@ -156,9 +151,10 @@ class ChatApp(QtWidgets.QMainWindow):
             self.sidebar.hide_animation(on_finished=remove_sidebar)
 
     def open_settings(self):
-        self.settings_modal = SettingsModal(parent=self.central_widget)
+        self.settings_modal = SettingsModal(parent=self.central_widget, user=self.user)
         self.settings_modal.font_applied.connect(self.apply_font)
         self.settings_modal.logout_triggered.connect(self.logout)
+        self.settings_modal.send_data.connect(self.send_data)
         self.settings_modal.move_to_center()
         self.settings_modal.show()
 
@@ -216,9 +212,12 @@ class ChatApp(QtWidgets.QMainWindow):
     def on_message(self, data):
         ActionHandler(data, self).handle()
 
-    def on_authenticate(self):
-        data = {"action": "get_chats"}
-        self.conn.send_data(data)
+    def on_authenticate(self, data: dict):
+        data_to_send = {"action": "get_chats"}
+        self.conn.send_data(data_to_send)
+        print(data)
+        self.user = data.get("data", {}).get('user', {})
+        print(self.user)
 
     def closeEvent(self, event) -> None:
         self.conn.stop()
@@ -237,14 +236,14 @@ if __name__ == "__main__":
         main_window.show()
 
     def show_login_window():
-        login_window = Login(HOST, PORT)
+        login_window = Login(env.HOST, env.PORT)
         login_window.show()
 
     if refresh_token:
         window = ChatApp()
         window.show_login_window.connect(show_login_window)
     else:
-        login_window = Login(HOST, PORT)
+        login_window = Login(env.HOST, env.PORT)
         login_window.login_successful.connect(show_main_window)
         window = login_window
 

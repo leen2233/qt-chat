@@ -59,7 +59,8 @@ class Sidebar(QtWidgets.QWidget):
         username_time_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_time_layout.setSpacing(0)
 
-        self.name = QtWidgets.QLabel(chat.user.username if chat else "")
+        display_name = (chat.user.full_name if chat.user.full_name else chat.user.username) if chat else ""
+        self.name = QtWidgets.QLabel(display_name)
         self.name.setStyleSheet("font-size: 20px; color: white;")
         self.time = QtWidgets.QLabel(format_timestamp(chat.updated_at) if chat else "")
         if chat:
@@ -85,7 +86,7 @@ class Sidebar(QtWidgets.QWidget):
         self.phone_number = QtWidgets.QLabel(chat.user.email if chat else "")
         self.phone_number.setStyleSheet("font-size: 14px; color: white")
         self.phone_number.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        description = QtWidgets.QLabel("Mobile")
+        description = QtWidgets.QLabel("Email")
         description.setStyleSheet("font-size: 10px; color: grey")
         phone_number_description_layout.addWidget(self.phone_number)
         phone_number_description_layout.addWidget(description)

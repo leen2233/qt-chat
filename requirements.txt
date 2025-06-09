@@ -2,3 +2,4 @@ Pyside6
 qtawesome
 python-dotenv
 websockets
+requests

@@ -16,7 +16,7 @@ class ActionHandler:
         if self.data.get("success") is False:
             data = {"action": "refresh_access_token", "data": {"refresh_token": self.window.refresh_token}}
             self.window.conn.send_data(data)
-        self.window.on_authenticate()
+        self.window.on_authenticate(self.data)
 
     def refresh_access_token(self):
         if self.data.get("success") is False or not self.data.get("data", {}).get("access_token"):

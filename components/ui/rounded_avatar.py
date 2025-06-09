@@ -94,8 +94,15 @@ class RoundedAvatar(QtWidgets.QWidget):
             self.avatar.setPixmap(rounded)
             reply.deleteLater()
 
-    def change_source(self, new_url):
+    def change_source(self, new_url=None, new_path=None):
         self.set_default_avatar()
-        url = QUrl(new_url)
-        request = QNetworkRequest(url)
-        self.nm.get(request)
+        if new_url:
+            url = QUrl(new_url)
+            request = QNetworkRequest(url)
+            self.nm.get(request)
+        elif new_path:
+            pixmap = QPixmap(new_path)
+            size = self.avatar.width()
+            rounded = self.create_rounded_pixmap(pixmap, size)
+            if self.avatar:
+                self.avatar.setPixmap(rounded)
