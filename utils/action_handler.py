@@ -34,7 +34,13 @@ class ActionHandler:
 
     def get_messages(self):
         results = self.data.get("data", {}).get("results")
-        messages = [MessageType(**message) for message in results]
+        messages = []
+        for message_data in results:
+            if message_data.get("reply_to"):
+                message_data["reply_to"] = MessageType(**message_data["reply_to"])
+            
+            messages.append(MessageType(**message_data))
+        
         self.window.fetched_messages.emit(messages)
 
     def get_chats(self):
@@ -58,5 +64,7 @@ class ActionHandler:
 
     def new_message(self):
         message = self.data.get("data", {}).get("message")
+        if message.get("reply_to"):
+            message["reply_to"] = MessageType(**message["reply_to"])
         message = MessageType(**message)
         self.window.new_message.emit(message)

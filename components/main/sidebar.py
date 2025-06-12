@@ -59,8 +59,7 @@ class Sidebar(QtWidgets.QWidget):
         username_time_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_time_layout.setSpacing(0)
 
-        display_name = (chat.user.full_name if chat.user.full_name else chat.user.username) if chat else ""
-        self.name = QtWidgets.QLabel(display_name)
+        self.name = QtWidgets.QLabel(chat.user.display_name if chat else "")
         self.name.setStyleSheet("font-size: 20px; color: white;")
         self.time = QtWidgets.QLabel(format_timestamp(chat.updated_at) if chat else "")
         if chat:

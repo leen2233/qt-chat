@@ -189,9 +189,13 @@ class ChatApp(QtWidgets.QMainWindow):
             self.updateGeometry()
             self.update()
 
-    def send_message(self, text):
-        data = {"action": "new_message", "data": {"chat_id": self.selected_chat.id, "text": text}}
-        self.send_data(data)
+    def send_message(self, data: dict):
+        if self.selected_chat:
+            data["chat_id"] = self.selected_chat.id
+            data = {"action": "new_message", "data": data}
+            self.send_data(data)
+        else:
+            print("No chat selected")
 
     def send_data(self, data):
         self.conn.send_data(data)

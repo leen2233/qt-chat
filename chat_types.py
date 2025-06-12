@@ -20,6 +20,7 @@ class MessageType:
     reply_to: Optional["MessageType"] = None
 
 
+
 @dataclass
 class StatType:
     photos: Optional[int]
@@ -35,6 +36,7 @@ class UserType:
     email: str
     id: str
     full_name: Optional[str] = None
+    display_name: str = ""
     avatar: Optional[str] = None
     is_online: bool = False
 

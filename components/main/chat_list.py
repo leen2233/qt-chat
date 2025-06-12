@@ -71,8 +71,7 @@ class ChatList(QtWidgets.QWidget):
         self.chat_items = []
         for chat in chats:
             updated_at_str = format_timestamp(chat.updated_at)
-            display_name = (chat.user.full_name if chat.user.full_name else chat.user.username) if chat else ""
-            item = ChatListItem(chat.id, chat.user.avatar, display_name, chat.last_message, updated_at_str)
+            item = ChatListItem(chat.id, chat.user.avatar, chat.user.display_name, chat.last_message, updated_at_str)
             item.clicked.connect(lambda item: self.handle_item_click(chat_item=item))
             self.chat_items.append(item)
             self.chats_layout.addWidget(self.chat_items[-1])

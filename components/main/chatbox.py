@@ -17,7 +17,7 @@ from utils.time import format_timestamp
 
 class ChatBox(QtWidgets.QWidget):
     sidebar_toggled_signal = Signal(bool)
-    message_sent = Signal(str)
+    message_sent = Signal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -207,8 +207,13 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
-            self.message_sent.emit(text)
+            data = {
+                "text": text,
+                "reply_to": self.reply_to_message.id if self.reply_to_message else None
+            }
+            self.message_sent.emit(data)
             self.chat_input.setText("")
+            self.close_reply()
 
     def load_messages(self, messages: List[MessageType]):
         for i in reversed(range(self.messages_container.count())):
@@ -229,8 +234,7 @@ class ChatBox(QtWidgets.QWidget):
 
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.user.avatar)
-        display_name = (chat.user.full_name if chat.user.full_name else chat.user.username) if chat else ""
-        self.username.setText(display_name)
+        self.username.setText(chat.user.display_name if chat else "")
         self.last_seen.setText(format_timestamp(chat.updated_at))
         if chat.user.is_online == "online":
             self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
