@@ -10,7 +10,7 @@ class ActionHandler:
         if hasattr(self, self.data.get("action")):
             getattr(self, self.data.get("action"))()
         else:
-            print("unknown action")
+            print("[unknown action], data: ", self.data)
 
     def authenticate(self):
         if self.data.get("success") is False:
@@ -38,9 +38,9 @@ class ActionHandler:
         for message_data in results:
             if message_data.get("reply_to"):
                 message_data["reply_to"] = MessageType(**message_data["reply_to"])
-            
+
             messages.append(MessageType(**message_data))
-        
+
         self.window.fetched_messages.emit(messages)
 
     def get_chats(self):
@@ -68,3 +68,19 @@ class ActionHandler:
             message["reply_to"] = MessageType(**message["reply_to"])
         message = MessageType(**message)
         self.window.new_message.emit(message)
+
+    def status_change(self):
+        user_id = self.data.get("data", {}).get("user_id")
+        status = self.data.get("data", {}).get("status")
+        last_seen = self.data.get("data", {}).get("last_seen")
+
+        print(f"[[[  {user_id}  -  {status} -  {last_seen} ]]]")
+
+        chats = self.window.chats
+        for chat in chats:
+            if chat.user and chat.user.id == user_id:
+                chat.user.is_online = status == "online"
+                chat.user.last_seen = last_seen
+
+        self.window.chats = chats
+        self.window.fetched_chats.emit(chats)

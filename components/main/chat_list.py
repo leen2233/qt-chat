@@ -68,6 +68,7 @@ class ChatList(QtWidgets.QWidget):
         self.result_items = []
 
     def load_chats(self, chats: List[ChatType]):
+        self.clear_chat_layout()
         self.chat_items = []
         for chat in chats:
             updated_at_str = format_timestamp(chat.updated_at)

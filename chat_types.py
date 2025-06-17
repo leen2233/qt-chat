@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -35,6 +36,7 @@ class UserType:
     username: str
     email: str
     id: str
+    last_seen: float
     full_name: Optional[str] = None
     display_name: str = ""
     avatar: Optional[str] = None

@@ -235,10 +235,11 @@ class ChatBox(QtWidgets.QWidget):
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.user.avatar)
         self.username.setText(chat.user.display_name if chat else "")
-        self.last_seen.setText(format_timestamp(chat.updated_at))
-        if chat.user.is_online == "online":
+        if chat.user.is_online:
+            self.last_seen.setText("online")
             self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
         else:
+            self.last_seen.setText(format_timestamp(chat.user.last_seen))
             self.last_seen.setStyleSheet("color: grey; font-size: 14px")
         self.chat = chat
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)

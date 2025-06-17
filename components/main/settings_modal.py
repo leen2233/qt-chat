@@ -391,7 +391,7 @@ class SettingsModal(QFrame):
             }
         """)
         self.setVisible(True)
-        self.setMinimumHeight(600)
+        self.setMinimumHeight(400)
         self.setMinimumWidth(300)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 10)
