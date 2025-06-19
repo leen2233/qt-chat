@@ -18,6 +18,7 @@ from utils.time import format_timestamp
 class ChatBox(QtWidgets.QWidget):
     sidebar_toggled_signal = Signal(bool)
     message_sent = Signal(dict)
+    message_deleted = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -182,11 +183,19 @@ class ChatBox(QtWidgets.QWidget):
     def add_message(self, message_item: MessageType, next=None, previous=None):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
+        message.delete_requested.connect(lambda i: self.message_deleted.emit(i))
         message.message_highlight.connect(self.highlight_message)
         self.messages_container.addWidget(message)
         QTimer.singleShot(10, self.scroll_to_bottom)
 
         return message
+
+    def delete_message(self, message_id: str):
+        for i in reversed(range(self.messages_container.count())):
+            item = self.messages_container.itemAt(i)
+            if item.widget() and item.widget().message_type.id == message_id:
+                item.widget().deleteLater()
+                self.messages_container.removeItem(item)
 
     def highlight_message(self, message_id: str):
         for index in range(self.messages_container.count()):

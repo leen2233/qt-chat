@@ -83,6 +83,7 @@ class HighlightableWidget(QtWidgets.QWidget):
 
 class Message(HighlightableWidget):
     reply_clicked = Signal(MessageType)
+    delete_requested = Signal(str)
     message_highlight = Signal(int)
 
     def __init__(self, message: MessageType, previous, next):
@@ -333,3 +334,6 @@ class Message(HighlightableWidget):
         action = context_menu.exec_(event.globalPos())
         if action == reply_action:
             self.reply_clicked.emit(self.message_type)
+
+        elif action == delete_action:
+            self.delete_requested.emit(self.message_type.id)

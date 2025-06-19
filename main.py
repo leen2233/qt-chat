@@ -22,6 +22,7 @@ class ChatApp(QtWidgets.QMainWindow):
     fetched_chats = Signal(list)
     fetched_messages = Signal(list)
     new_message = Signal(MessageType)
+    message_deleted = Signal(str)
     on_logout = Signal()
 
     def __init__(self):
@@ -74,6 +75,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_area = ChatBox()
         self.chat_area.sidebar_toggled_signal.connect(self.toggle_sidebar)
         self.chat_area.message_sent.connect(self.send_message)
+        self.chat_area.message_deleted.connect(self.delete_message)
 
         self.splitter.addWidget(self.chat_list)
         self.splitter.addWidget(self.chat_area)
@@ -94,6 +96,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.fetched_messages.connect(self.chat_area.load_messages)
         self.new_message.connect(self.chat_area.add_message)
         self.on_logout.connect(self.logout)
+        self.message_deleted.connect(self.chat_area.delete_message)
         self.conn.start()
 
     def setup_shortcuts(self):
@@ -197,6 +200,10 @@ class ChatApp(QtWidgets.QMainWindow):
         else:
             print("No chat selected")
 
+    def delete_message(self, message_id: str):
+        data = {'action': 'delete_message', "data": {"message_id": message_id}}
+        self.send_data(data)
+
     def send_data(self, data):
         self.conn.send_data(data)
 
@@ -222,6 +229,9 @@ class ChatApp(QtWidgets.QMainWindow):
         print(data)
         self.user = data.get("data", {}).get('user', {})
         print(self.user)
+
+    def on_message_delete(self, message_id: str):
+        self.chats
 
     def closeEvent(self, event) -> None:
         self.conn.stop()

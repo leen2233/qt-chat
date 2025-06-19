@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -12,7 +11,7 @@ class MessageType:
         FAILED = "failed"
         READ = "read"
 
-    id: int
+    id: str
     text: str
     is_mine: bool
     time: float

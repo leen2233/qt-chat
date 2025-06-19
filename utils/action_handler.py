@@ -84,3 +84,9 @@ class ActionHandler:
 
         self.window.chats = chats
         self.window.fetched_chats.emit(chats)
+
+    def delete_message(self):
+        if not self.data.get("success"):
+            print("[DELETE MESSAGE FAILED]", self.data.get("data"))
+
+        self.window.message_deleted.emit(self.data.get("data", {}).get("id"))
