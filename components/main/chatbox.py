@@ -2,9 +2,9 @@ from typing import List
 
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import Qt, QTimer, Signal
-from qtpy.QtCore import QSize
-from qtpy.QtWidgets import QHBoxLayout
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QHBoxLayout
 
 from chat_types import ChatType, MessageType
 from components.ui.message import Message
@@ -18,6 +18,7 @@ from utils.time import format_timestamp
 class ChatBox(QtWidgets.QWidget):
     sidebar_toggled_signal = Signal(bool)
     message_sent = Signal(dict)
+    message_edited = Signal(dict)
     message_deleted = Signal(str)
 
     def __init__(self, parent=None):
@@ -26,6 +27,8 @@ class ChatBox(QtWidgets.QWidget):
         self.chat = None
         self.reply_opened = False
         self.reply_to_message = None
+        self.edit_opened = False
+        self.message_to_edit = None
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -127,7 +130,7 @@ class ChatBox(QtWidgets.QWidget):
         self.reply_to_widget.setContentsMargins(0, 0, 0, 0)
         self.reply_to_layout = QHBoxLayout(self.reply_to_widget)
         self.reply_to_layout.setContentsMargins(0, 0, 0, 0)
-        self.reply_to_text = QtWidgets.QLabel("Hi there!")
+        self.reply_to_text = QtWidgets.QLabel()
         self.reply_to_text.setStyleSheet(replying_to_label_style)
         close_reply_button = QtWidgets.QPushButton(qta.icon("mdi.close", color="white", size=(40, 40)), "")
         close_reply_button.setIconSize(QSize(22, 22))
@@ -137,6 +140,24 @@ class ChatBox(QtWidgets.QWidget):
         close_reply_button.clicked.connect(self.close_reply)
         self.reply_to_layout.addWidget(self.reply_to_text)
         self.reply_to_layout.addWidget(close_reply_button)
+
+
+        self.edit_widget = QtWidgets.QWidget()
+        self.edit_widget.setMaximumHeight(0)
+        self.edit_widget.setContentsMargins(0, 0, 0, 0)
+        self.edit_layout = QHBoxLayout(self.edit_widget)
+        self.edit_layout.setContentsMargins(0, 0, 0, 0)
+        self.edit_text = QtWidgets.QLabel()
+        self.edit_text.setStyleSheet(replying_to_label_style)
+        close_edit_button = QtWidgets.QPushButton(qta.icon("mdi.close", color="white", size=(40, 40)), "")
+        close_edit_button.setIconSize(QSize(22, 22))
+        close_edit_button.setStyleSheet("background-color: #4c4c4b; border: none; border-radius: 5px")
+        close_edit_button.setFixedSize(35, 35)
+        close_edit_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_edit_button.clicked.connect(self.close_edit)
+        self.edit_layout.addWidget(self.edit_text)
+        self.edit_layout.addWidget(close_edit_button)
+
         # reply_to.setStyleSheet(
         #     "background-color: #30302e; border-radius: 10px; border: 0.5px solid grey; margin-bottom: 0px; text-align: left; padding-left: 20px; border-bottom: none"
         # )
@@ -166,6 +187,7 @@ class ChatBox(QtWidgets.QWidget):
         input_and_button_layout.addWidget(self.send_button)
 
         self.input_part.addWidget(self.reply_to_widget)
+        self.input_part.addWidget(self.edit_widget)
         self.input_part.addLayout(
             input_and_button_layout,
         )
@@ -183,6 +205,7 @@ class ChatBox(QtWidgets.QWidget):
     def add_message(self, message_item: MessageType, next=None, previous=None):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
+        message.edit_requested.connect(self.open_edit)
         message.delete_requested.connect(lambda i: self.message_deleted.emit(i))
         message.message_highlight.connect(self.highlight_message)
         self.messages_container.addWidget(message)
@@ -196,6 +219,12 @@ class ChatBox(QtWidgets.QWidget):
             if item.widget() and item.widget().message_type.id == message_id:
                 item.widget().deleteLater()
                 self.messages_container.removeItem(item)
+
+    def edit_message(self, data: dict):
+        for i in reversed(range(self.messages_container.count())):
+            item = self.messages_container.itemAt(i)
+            if item.widget() and item.widget().message_type.id == data.get("id"):
+                item.widget().setText(data.get("text"))
 
     def highlight_message(self, message_id: str):
         for index in range(self.messages_container.count()):
@@ -216,13 +245,22 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
-            data = {
-                "text": text,
-                "reply_to": self.reply_to_message.id if self.reply_to_message else None
-            }
-            self.message_sent.emit(data)
-            self.chat_input.setText("")
-            self.close_reply()
+            if self.message_to_edit:
+                data = {
+                    "message_id": self.message_to_edit.id,
+                    "text": text
+                }
+                self.message_edited.emit(data)
+                self.chat_input.setText("")
+                self.close_edit()
+            else:
+                data = {
+                    "text": text,
+                    "reply_to": self.reply_to_message.id if self.reply_to_message else None
+                }
+                self.message_sent.emit(data)
+                self.chat_input.setText("")
+                self.close_reply()
 
     def load_messages(self, messages: List[MessageType]):
         for i in reversed(range(self.messages_container.count())):
@@ -286,3 +324,38 @@ class ChatBox(QtWidgets.QWidget):
             self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
             self.animation.start()
             self.reply_opened = True
+
+    def close_edit(self):
+        self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight")
+        self.animation.setDuration(200)  # Animation duration in milliseconds
+        self.animation.setStartValue(35)
+        self.animation.setEndValue(0)  # Final width
+        self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
+        self.animation.start()
+
+        self.send_button.setIcon(qta.icon("fa6.paper-plane", color="white", size=(40, 40)))
+        self.send_button.setIconSize(QSize(22, 22))
+        self.chat_input.setText("")
+        self.edit_opened = False
+        self.message_to_edit = None
+
+    def open_edit(self, message: MessageType):
+        index = int(self.edit_text.width() / 5.8)
+        self.message_to_edit = message
+        print(message.text, index, message.text[:index])
+        self.edit_text.setText(message.text)
+        self.chat_input.setText(message.text)
+        self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
+        self.chat_input.moveCursor(QTextCursor.MoveOperation.End)
+        self.send_button.setIcon(qta.icon("mdi.check-circle-outline", color="white", size=(40, 40)))
+        self.send_button.setIconSize(QSize(30, 30))
+
+        if not self.edit_opened:
+            print("starting animation")
+            self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight")
+            self.animation.setDuration(200)  # Animation duration in milliseconds
+            self.animation.setStartValue(0)
+            self.animation.setEndValue(35)  # Final width
+            self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
+            self.animation.start()
+            self.edit_opened = True

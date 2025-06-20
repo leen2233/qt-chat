@@ -84,6 +84,7 @@ class HighlightableWidget(QtWidgets.QWidget):
 class Message(HighlightableWidget):
     reply_clicked = Signal(MessageType)
     delete_requested = Signal(str)
+    edit_requested = Signal(MessageType)
     message_highlight = Signal(int)
 
     def __init__(self, message: MessageType, previous, next):
@@ -255,6 +256,11 @@ class Message(HighlightableWidget):
                 self.time_status_layout.setContentsMargins(0, 0, 10, 10)
             self.set_width = True
 
+    def setText(self, text: str):
+        self.text.setPlainText(text)
+        self.message_type.text = text
+        QTimer.singleShot(50, self.adjust_sizes)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if event.size().width() < 600:
@@ -324,16 +330,30 @@ class Message(HighlightableWidget):
         context_menu = QtWidgets.QMenu(self)
         reply_action = context_menu.addAction(qta.icon("mdi.reply-outline", color="white"), "Reply")
         select_action = context_menu.addAction(qta.icon("mdi.selection-ellipse-arrow-inside", color="white"), "Select")
+
+        edit_action = None
+        if self.is_mine:
+            edit_action = context_menu.addAction(qta.icon("mdi.square-edit-outline", color="white"), "Edit")
         pin_action = context_menu.addAction(qta.icon("mdi.pin-outline", color="white"), "Pin")
         copy_action = context_menu.addAction(qta.icon("mdi.content-copy", color="white"), "Copy Text")
         forward_action = context_menu.addAction(qta.icon("mdi.arrow-top-right-bold-outline", color="white"), "Forward")
         context_menu.addSeparator()
-        delete_action = context_menu.addAction(qta.icon("mdi.trash-can-outline", color="white"), "Delete")
+
+        delete_action = None
+        if self.is_mine:
+            delete_action = context_menu.addAction(qta.icon("mdi.trash-can-outline", color="white"), "Delete")
 
         context_menu.setStyleSheet(context_menu_style)
         action = context_menu.exec_(event.globalPos())
+
+        if not action:
+            return
+
         if action == reply_action:
             self.reply_clicked.emit(self.message_type)
 
         elif action == delete_action:
             self.delete_requested.emit(self.message_type.id)
+
+        elif action == edit_action:
+            self.edit_requested.emit(self.message_type)

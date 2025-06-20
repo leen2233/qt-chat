@@ -69,6 +69,18 @@ class ActionHandler:
         message = MessageType(**message)
         self.window.new_message.emit(message)
 
+    def delete_message(self):
+        if not self.data.get("success"):
+            print("[DELETE MESSAGE FAILED]", self.data.get("data"))
+
+        self.window.message_deleted.emit(self.data.get("data", {}).get("id"))
+
+    def edit_message(self):
+        if not self.data.get("success"):
+            print("[EDIT MESSAGE FAILED]", self.data.get("data"))
+
+        self.window.message_edited.emit(self.data.get("data"))
+
     def status_change(self):
         user_id = self.data.get("data", {}).get("user_id")
         status = self.data.get("data", {}).get("status")
@@ -84,9 +96,3 @@ class ActionHandler:
 
         self.window.chats = chats
         self.window.fetched_chats.emit(chats)
-
-    def delete_message(self):
-        if not self.data.get("success"):
-            print("[DELETE MESSAGE FAILED]", self.data.get("data"))
-
-        self.window.message_deleted.emit(self.data.get("data", {}).get("id"))
