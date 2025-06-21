@@ -1,21 +1,14 @@
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
 
 
 @dataclass
 class MessageType:
-    class Status(Enum):
-        SENDING = "sending"
-        SENT = "sent"
-        FAILED = "failed"
-        READ = "read"
-
     id: str
     text: str
     is_mine: bool
     time: float
-    status: Status | str = Status.SENDING
+    status: str = "sending"
 
     reply_to: Optional["MessageType"] = None
 

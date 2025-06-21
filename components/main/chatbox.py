@@ -20,6 +20,7 @@ class ChatBox(QtWidgets.QWidget):
     message_sent = Signal(dict)
     message_edited = Signal(dict)
     message_deleted = Signal(str)
+    mark_as_read = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -216,22 +217,28 @@ class ChatBox(QtWidgets.QWidget):
     def delete_message(self, message_id: str):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id == message_id:
+            if item.widget() and item.widget().message_type.id == message_id:  # type: ignore
                 item.widget().deleteLater()
                 self.messages_container.removeItem(item)
 
     def edit_message(self, data: dict):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id == data.get("id"):
-                item.widget().setText(data.get("text"))
+            if item.widget() and item.widget().message_type.id == data.get("id"): # type: ignore
+                item.widget().setText(data.get("text")) # type: ignore
+
+    def read_message(self, message_ids: List[str]):
+        for i in reversed(range(self.messages_container.count())):
+            item = self.messages_container.itemAt(i)
+            if item.widget() and item.widget().message_type.id in message_ids: # type: ignore
+                item.widget().mark_as_read() # type: ignore
 
     def highlight_message(self, message_id: str):
         for index in range(self.messages_container.count()):
             item = self.messages_container.itemAt(index)
-            if item and item.widget() and item.widget().message_type.id == message_id:
+            if item and item.widget() and item.widget().message_type.id == message_id: # type: ignore
                 self.scroll_area.ensureWidgetVisible(item.widget())
-                item.widget().highlight()
+                item.widget().highlight() # type: ignore
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def scroll_to_bottom(self):
@@ -268,6 +275,8 @@ class ChatBox(QtWidgets.QWidget):
             if item.widget():  # Check if item has a widget
                 item.widget().deleteLater()
             self.messages_container.removeItem(item)
+
+        unread_messages = []
         for index, message in enumerate(messages):
             previous = None
             next = None
@@ -276,6 +285,12 @@ class ChatBox(QtWidgets.QWidget):
             if index < len(messages) - 1:
                 previous = messages[index + 1].is_mine
             self.add_message(message, previous, next)
+
+            if not message.is_mine and message.status != "read":
+                unread_messages.append(message.id)
+
+        if unread_messages:
+            self.mark_as_read.emit(unread_messages)
 
         QTimer.singleShot(100, self.scroll_to_bottom)
 
@@ -302,7 +317,7 @@ class ChatBox(QtWidgets.QWidget):
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def close_reply(self):
-        self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
+        self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight") # type: ignore
         self.animation.setDuration(200)  # Animation duration in milliseconds
         self.animation.setStartValue(35)
         self.animation.setEndValue(0)  # Final width
@@ -317,7 +332,7 @@ class ChatBox(QtWidgets.QWidget):
         self.reply_to_text.setText(message.text[:index])
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
         if not self.reply_opened:
-            self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight")
+            self.animation = QtCore.QPropertyAnimation(self.reply_to_widget, b"maximumHeight") # type: ignore
             self.animation.setDuration(200)  # Animation duration in milliseconds
             self.animation.setStartValue(0)
             self.animation.setEndValue(35)  # Final width
@@ -326,7 +341,7 @@ class ChatBox(QtWidgets.QWidget):
             self.reply_opened = True
 
     def close_edit(self):
-        self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight")
+        self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight") # type: ignore
         self.animation.setDuration(200)  # Animation duration in milliseconds
         self.animation.setStartValue(35)
         self.animation.setEndValue(0)  # Final width
@@ -352,7 +367,7 @@ class ChatBox(QtWidgets.QWidget):
 
         if not self.edit_opened:
             print("starting animation")
-            self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight")
+            self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight") # type: ignore
             self.animation.setDuration(200)  # Animation duration in milliseconds
             self.animation.setStartValue(0)
             self.animation.setEndValue(35)  # Final width

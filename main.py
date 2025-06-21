@@ -1,5 +1,6 @@
+import argparse
 import sys
-from typing import Optional
+from typing import List, Optional
 
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
@@ -24,12 +25,13 @@ class ChatApp(QtWidgets.QMainWindow):
     new_message = Signal(MessageType)
     message_deleted = Signal(str)
     message_edited = Signal(dict)
+    messages_read = Signal(List[str])
     on_logout = Signal()
 
-    def __init__(self):
+    def __init__(self, settings_instance: str):
         super().__init__()
         self.config = ConfigManager()
-        self.settings = QSettings("Veia Sp.", "Veia")
+        self.settings = QSettings("Veia Sp.", settings_instance)
         self.refresh_token = settings.value("refresh_token")
         self.access_token = settings.value("access_token")
         self.conn = Conn(env.HOST, env.PORT, self.access_token)
@@ -37,7 +39,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.conn.disconnected_callback = self.on_disconnect
         self.conn.on_message_callback = self.on_message
 
-        self.user = None
+        self.user: Optional[dict] = None
         self.connected = False
         self.chats = []
 
@@ -78,6 +80,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_area.message_sent.connect(self.send_message)
         self.chat_area.message_edited.connect(self.edit_message)
         self.chat_area.message_deleted.connect(self.delete_message)
+        self.chat_area.mark_as_read.connect(self.mark_as_read)
 
         self.splitter.addWidget(self.chat_list)
         self.splitter.addWidget(self.chat_area)
@@ -100,6 +103,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.on_logout.connect(self.logout)
         self.message_deleted.connect(self.chat_area.delete_message)
         self.message_edited.connect(self.chat_area.edit_message)
+        self.messages_read.connect(self.chat_area.read_message)
         self.conn.start()
 
     def setup_shortcuts(self):
@@ -157,7 +161,7 @@ class ChatApp(QtWidgets.QMainWindow):
             self.sidebar.hide_animation(on_finished=remove_sidebar)
 
     def open_settings(self):
-        self.settings_modal = SettingsModal(parent=self.central_widget, user=self.user)
+        self.settings_modal = SettingsModal(parent=self.central_widget, user=self.user or {})
         self.settings_modal.font_applied.connect(self.apply_font)
         self.settings_modal.logout_triggered.connect(self.logout)
         self.settings_modal.send_data.connect(self.send_data)
@@ -211,6 +215,10 @@ class ChatApp(QtWidgets.QMainWindow):
         data = {'action': 'delete_message', "data": {"message_id": message_id}}
         self.send_data(data)
 
+    def mark_as_read(self, message_ids: List[str]):
+        data = {'action': 'read_message', "data": {"message_ids": message_ids}}
+        self.send_data(data)
+
     def send_data(self, data):
         self.conn.send_data(data)
 
@@ -243,25 +251,34 @@ class ChatApp(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    settings = QSettings("Veia Sp.", "Veia")
+    parser = argparse.ArgumentParser(description='Chat Application')
+    parser.add_argument('--instance', type=int, default=0,
+                       help='Instance number for separate settings (default: 0)')
+    args = parser.parse_args()
+
+    settings_instance = "Veia"
+    if args.instance > 0:
+        settings_instance = f"Veia_{args.instance}"
+
+    settings = QSettings("Veia Sp.", settings_instance)
     refresh_token = settings.value("refresh_token")
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
 
     def show_main_window():
-        main_window = ChatApp()
+        main_window = ChatApp(settings_instance)
         main_window.show()
 
     def show_login_window():
-        login_window = Login(env.HOST, env.PORT)
+        login_window = Login(env.HOST, env.PORT, settings_instance)
         login_window.show()
 
     if refresh_token:
-        window = ChatApp()
+        window = ChatApp(settings_instance)
         window.show_login_window.connect(show_login_window)
     else:
-        login_window = Login(env.HOST, env.PORT)
+        login_window = Login(env.HOST, env.PORT, settings_instance)
         login_window.login_successful.connect(show_main_window)
         window = login_window
 

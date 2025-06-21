@@ -96,3 +96,7 @@ class ActionHandler:
 
         self.window.chats = chats
         self.window.fetched_chats.emit(chats)
+
+    def read_message(self):
+        message_ids = self.data.get("ids")
+        self.window.messages_read.emit(message_ids)

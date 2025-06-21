@@ -18,7 +18,7 @@ class HighlightableWidget(QtWidgets.QWidget):
         self.setAutoFillBackground(True)
         self._update_stylesheet()
 
-        self._animation = QtCore.QPropertyAnimation(self, b"highlight_color")
+        self._animation = QtCore.QPropertyAnimation(self, b"highlight_color") # type: ignore
         self._animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutCubic)
 
     def _update_stylesheet(self):
@@ -37,7 +37,7 @@ class HighlightableWidget(QtWidgets.QWidget):
         self._current_color = color
         self._update_stylesheet()
 
-    highlight_color = QtCore.Property(QColor, get_highlight_color, set_highlight_color)
+    highlight_color = QtCore.Property(QColor, get_highlight_color, set_highlight_color) # type: ignore
 
     def set_base_color(self, color):
         """Set the widget's base color"""
@@ -67,7 +67,7 @@ class HighlightableWidget(QtWidgets.QWidget):
         self._animation.setStartValue(self._current_color)
         self._animation.setEndValue(highlight_color)
 
-        self.second_animation = QtCore.QPropertyAnimation(self, b"highlight_color")
+        self.second_animation = QtCore.QPropertyAnimation(self, b"highlight_color") # type: ignore
         self.second_animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutCubic)
         self.second_animation.setDuration(duration // 2)
         self.second_animation.setStartValue(highlight_color)
@@ -145,7 +145,7 @@ class Message(HighlightableWidget):
                 self.reply_to_label.setStyleSheet(build_reply_to_label_style())
             self.reply_to_label.setContentsMargins(0, 0, 0, 0)
             self.reply_to_label.setCursor(Qt.CursorShape.PointingHandCursor)
-            self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id))
+            self.reply_to_label.clicked.connect(lambda: self.message_highlight.emit(message.reply_to.id if message.reply_to else ""))
             self.message_layout.addWidget(self.reply_to_label)
 
         self.text_and_time_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.TopToBottom)
@@ -173,13 +173,13 @@ class Message(HighlightableWidget):
         if self.is_mine:
             self.status = QtWidgets.QLabel()
             pixmap = None
-            if self.message_type.status == MessageType.Status.SENDING:
+            if self.message_type.status == "sending":
                 icon = qta.icon("mdi.clock-outline", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(18, 18)
-            elif self.message_type.status == MessageType.Status.SENT:
+            elif self.message_type.status == "sent":
                 icon = qta.icon("mdi.check", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(20, 20)
-            elif self.message_type.status == MessageType.Status.READ:
+            elif self.message_type.status == "read":
                 icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(20, 20)
             if pixmap:
@@ -260,6 +260,12 @@ class Message(HighlightableWidget):
         self.text.setPlainText(text)
         self.message_type.text = text
         QTimer.singleShot(50, self.adjust_sizes)
+
+    def mark_as_read(self):
+        icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
+        pixmap = icon.pixmap(20, 20)
+        if pixmap:
+            self.status.setPixmap(pixmap)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

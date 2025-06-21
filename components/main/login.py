@@ -9,8 +9,9 @@ class Login(QtWidgets.QMainWindow):
     login_successful = Signal()
     on_login = Signal(dict)
 
-    def __init__(self, host, port, parent=None):
+    def __init__(self, host, port, settings_instance: str, parent=None):
         super().__init__(parent=parent)
+        self.settings_instance = settings_instance
 
         self.conn = Conn(host, port)
         self.conn.connected_callback = self.on_connect
@@ -68,14 +69,14 @@ class Login(QtWidgets.QMainWindow):
 
         self.main_layout.addStretch()
         self.main_layout.addWidget(title)
-        self.main_layout.setAlignment(title, Qt.Alignment.AlignCenter)
+        self.main_layout.setAlignment(title, Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(tab_container)
-        self.main_layout.setAlignment(tab_container, Qt.Alignment.AlignCenter)
+        self.main_layout.setAlignment(tab_container, Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.stacked_widget)
-        self.main_layout.setAlignment(self.stacked_widget, Qt.Alignment.AlignCenter)
+        self.main_layout.setAlignment(self.stacked_widget, Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addStretch()
 
-        self.slide_animation = QPropertyAnimation(self.stacked_widget, b"geometry")
+        self.slide_animation = QPropertyAnimation(self.stacked_widget, b"geometry") # type: ignore
         self.slide_animation.setDuration(300)
         self.slide_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
@@ -231,7 +232,7 @@ class Login(QtWidgets.QMainWindow):
         access_token = data.get("data", {}).get("access")
         refresh_token = data.get("data", {}).get("refresh")
 
-        settings = QSettings("Veia Sp.", "Veia")
+        settings = QSettings("Veia Sp.", self.settings_instance)
         settings.setValue("access_token", access_token)
         settings.setValue("refresh_token", refresh_token)
 

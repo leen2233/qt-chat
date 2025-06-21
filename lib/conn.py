@@ -50,12 +50,13 @@ class Conn:
 
     async def listen(self):
         try:
-            async for message in self.websocket:
-                self.on_message(message)
+            if self.websocket:
+                async for message in self.websocket:
+                    self.on_message(message)
         except Exception as e:
             print("Error in listen:", e)
 
-    def on_message(self, message: str):
+    def on_message(self, message):
         try:
             data = json.loads(message)
             if self.on_message_callback:
@@ -77,5 +78,5 @@ class Conn:
     def stop(self):
         self._running = False
         if self.websocket:
-            self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.websocket.close()))
+            self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.websocket.close())) # type: ignore
         self.thread.join()

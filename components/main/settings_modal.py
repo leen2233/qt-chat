@@ -1,3 +1,4 @@
+
 import qtawesome as qta
 import requests
 from PySide6 import QtCore
@@ -161,10 +162,10 @@ class FontSettings(QFrame):
             self.font_list.setItemWidget(item, item_widget)
 
     def show(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(parent_rect.width(), 0)
         end_pos = QPoint(0, 0)
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos")  # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -173,10 +174,10 @@ class FontSettings(QFrame):
         self.animation.finished.connect(self.load_fonts)
 
     def back(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(0, 0)
         end_pos = QPoint(parent_rect.width(), 0)
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos") # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -311,10 +312,10 @@ class EditProfile(QFrame):
         self.main_layout.addStretch()
 
     def show(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(parent_rect.width(), 0)
         end_pos = QPoint(0, 0)
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos") # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -322,10 +323,10 @@ class EditProfile(QFrame):
         self.animation.start()
 
     def back(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(0, 0)
         end_pos = QPoint(parent_rect.width(), 0)
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos") # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -378,7 +379,7 @@ class SettingsModal(QFrame):
     logout_triggered = Signal()
     send_data = Signal(dict)
 
-    def __init__(self, parent=None, user: dict={}):
+    def __init__(self, parent=None, user: dict = {}):
         super().__init__(parent=parent)
         self.user = user
 
@@ -437,12 +438,12 @@ class SettingsModal(QFrame):
         self.main_layout.addWidget(logout_button)
 
     def show(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint((parent_rect.width() // 2 - self.width() // 2), parent_rect.height())
         end_pos = QPoint(
             (parent_rect.width() // 2 - self.width() // 2), (parent_rect.height() // 2 - self.height() // 2)
         )
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos") # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -450,12 +451,12 @@ class SettingsModal(QFrame):
         self.animation.start()
 
     def close(self) -> bool:
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(
             (parent_rect.width() // 2 - self.width() // 2), (parent_rect.height() // 2 - self.height() // 2)
         )
         end_pos = QPoint((parent_rect.width() // 2 - self.width() // 2), parent_rect.height())
-        self.animation = QPropertyAnimation(self, b"pos")
+        self.animation = QPropertyAnimation(self, b"pos") # type: ignore
         self.animation.setDuration(250)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
@@ -465,7 +466,7 @@ class SettingsModal(QFrame):
         return True
 
     def move_to_center(self):
-        parent_rect = self.parent().rect()
+        parent_rect = self.parent().rect() # type: ignore
         start_pos = QPoint(
             (parent_rect.width() // 2 - self.width() // 2), (parent_rect.height() // 2 - self.height() // 2)
         )
