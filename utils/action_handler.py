@@ -5,6 +5,7 @@ class ActionHandler:
     def __init__(self, data, window) -> None:
         self.window = window
         self.data = data
+        print("[RECV]", self.data)
 
     def handle(self):
         if hasattr(self, self.data.get("action")):
@@ -64,10 +65,11 @@ class ActionHandler:
 
     def new_message(self):
         message = self.data.get("data", {}).get("message")
+        chat_id = self.data.get("data", {}).get("chat", {}).get("id")
         if message.get("reply_to"):
             message["reply_to"] = MessageType(**message["reply_to"])
         message = MessageType(**message)
-        self.window.new_message.emit(message)
+        self.window.new_message.emit(message, chat_id)
 
     def delete_message(self):
         if not self.data.get("success"):
@@ -98,5 +100,5 @@ class ActionHandler:
         self.window.fetched_chats.emit(chats)
 
     def read_message(self):
-        message_ids = self.data.get("ids")
+        message_ids = self.data.get("data", {}).get("ids")
         self.window.messages_read.emit(message_ids)

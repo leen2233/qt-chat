@@ -6,7 +6,7 @@ from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
 
 import env
-from chat_types import MessageType
+from chat_types import ChatType, MessageType
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
 from components.main.login import Login
@@ -22,10 +22,10 @@ class ChatApp(QtWidgets.QMainWindow):
     search_results_received = Signal(list)
     fetched_chats = Signal(list)
     fetched_messages = Signal(list)
-    new_message = Signal(MessageType)
+    new_message = Signal(MessageType, str)
     message_deleted = Signal(str)
     message_edited = Signal(dict)
-    messages_read = Signal(List[str])
+    messages_read = Signal(list)
     on_logout = Signal()
 
     def __init__(self, settings_instance: str):
@@ -43,7 +43,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.connected = False
         self.chats = []
 
-        self.selected_chat = None
+        self.selected_chat: Optional[ChatType] = None
         self.sidebar_opened = False
 
         self.settings_modal = None
@@ -99,7 +99,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.search_results_received.connect(self.chat_list.load_search_results)
         self.fetched_chats.connect(self.chat_list.load_chats)
         self.fetched_messages.connect(self.chat_area.load_messages)
-        self.new_message.connect(self.chat_area.add_message)
+        self.new_message.connect(self.on_new_message)
         self.on_logout.connect(self.logout)
         self.message_deleted.connect(self.chat_area.delete_message)
         self.message_edited.connect(self.chat_area.edit_message)
@@ -237,6 +237,10 @@ class ChatApp(QtWidgets.QMainWindow):
 
     def on_message(self, data):
         ActionHandler(data, self).handle()
+
+    def on_new_message(self, message_item: MessageType, chat_id: str):
+        if self.selected_chat and self.selected_chat.id == chat_id:
+            self.chat_area.add_new_message(message_item)
 
     def on_authenticate(self, data: dict):
         data_to_send = {"action": "get_chats"}

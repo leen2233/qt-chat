@@ -214,6 +214,11 @@ class ChatBox(QtWidgets.QWidget):
 
         return message
 
+    def add_new_message(self, message_item: MessageType):
+        self.add_message(message_item)
+        if not message_item.is_mine and message_item.status != "read":
+            self.mark_as_read.emit([message_item.id])
+
     def delete_message(self, message_id: str):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
@@ -230,7 +235,7 @@ class ChatBox(QtWidgets.QWidget):
     def read_message(self, message_ids: List[str]):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id in message_ids: # type: ignore
+            if item.widget() and item.widget().message_type.is_mine and item.widget().message_type.id in message_ids: # type: ignore
                 item.widget().mark_as_read() # type: ignore
 
     def highlight_message(self, message_id: str):
