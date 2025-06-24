@@ -5,6 +5,7 @@ from PySide6.QtGui import QColor
 
 from chat_types import MessageType
 from styles import Colors, build_reply_to_label_style, context_menu_style
+from utils import gv
 from utils.time import format_timestamp
 
 
@@ -92,7 +93,8 @@ class Message(HighlightableWidget):
         self.message_type = message
         self.message = message.text
         self.time = message.time
-        self.is_mine = message.is_mine
+        user = gv.get("user", {})
+        self.is_mine = message.sender == user.get("id")
 
         self.previous = previous
         self.next = next

@@ -14,6 +14,7 @@ from components.main.settings_modal import SettingsModal
 from components.main.sidebar import Sidebar
 from lib.config import ConfigManager
 from lib.conn import Conn
+from utils import gv  # gv standas for global variable, because can't use global
 from utils.action_handler import ActionHandler
 
 
@@ -161,7 +162,7 @@ class ChatApp(QtWidgets.QMainWindow):
             self.sidebar.hide_animation(on_finished=remove_sidebar)
 
     def open_settings(self):
-        self.settings_modal = SettingsModal(parent=self.central_widget, user=self.user or {})
+        self.settings_modal = SettingsModal(parent=self.central_widget)
         self.settings_modal.font_applied.connect(self.apply_font)
         self.settings_modal.logout_triggered.connect(self.logout)
         self.settings_modal.send_data.connect(self.send_data)
@@ -245,9 +246,8 @@ class ChatApp(QtWidgets.QMainWindow):
     def on_authenticate(self, data: dict):
         data_to_send = {"action": "get_chats"}
         self.conn.send_data(data_to_send)
-        print(data)
         self.user = data.get("data", {}).get('user', {})
-        print(self.user)
+        gv.set("user", self.user)
 
     def closeEvent(self, event) -> None:
         self.conn.stop()

@@ -6,12 +6,12 @@ from typing import Optional
 class MessageType:
     id: str
     text: str
-    is_mine: bool
+    sender: str
     time: float
     status: str = "sending"
+    is_mine: Optional[bool] = False
 
     reply_to: Optional["MessageType"] = None
-
 
 
 @dataclass

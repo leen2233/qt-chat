@@ -22,6 +22,7 @@ import env
 from components.ui.rounded_avatar import RoundedAvatar
 from components.ui.settings_header import Header
 from styles import Colors
+from utils import gv
 
 
 class SettingsItem(QWidget):
@@ -379,9 +380,9 @@ class SettingsModal(QFrame):
     logout_triggered = Signal()
     send_data = Signal(dict)
 
-    def __init__(self, parent=None, user: dict = {}):
+    def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.user = user
+        self.user = gv.get("user", {})
 
         self.setObjectName("floatingPanel")
         self.setStyleSheet("""
@@ -403,13 +404,13 @@ class SettingsModal(QFrame):
         user_data_layout = QHBoxLayout()
         user_data_layout.setContentsMargins(20, 10, 20, 10)
 
-        avatar = RoundedAvatar(user.get("avatar"))
+        avatar = RoundedAvatar(self.user.get("avatar"))
         username_email_layout = QVBoxLayout()
         username_email_layout.setSpacing(0)
 
-        username = QLabel(user.get("username"))
+        username = QLabel(self.user.get("username"))
         username.setStyleSheet("color: white; font-size: 17px")
-        email = QLabel(user.get("email"))
+        email = QLabel(self.user.get("email"))
         email.setStyleSheet("color: #ababab; font-size: 12px")
 
         username_email_layout.addWidget(username)

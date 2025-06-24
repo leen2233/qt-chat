@@ -229,7 +229,7 @@ class ChatBox(QtWidgets.QWidget):
     def edit_message(self, data: dict):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id == data.get("id"): # type: ignore
+            if item.widget() and item.widget().message_type.id == data.get("message_id"): # type: ignore
                 item.widget().setText(data.get("text")) # type: ignore
 
     def read_message(self, message_ids: List[str]):

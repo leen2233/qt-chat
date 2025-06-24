@@ -75,7 +75,7 @@ class ActionHandler:
         if not self.data.get("success"):
             print("[DELETE MESSAGE FAILED]", self.data.get("data"))
 
-        self.window.message_deleted.emit(self.data.get("data", {}).get("id"))
+        self.window.message_deleted.emit(self.data.get("data", {}).get("message_id"))
 
     def edit_message(self):
         if not self.data.get("success"):
