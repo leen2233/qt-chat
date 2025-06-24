@@ -12,6 +12,7 @@ from components.ui.rounded_avatar import RoundedAvatar
 from components.ui.text_edit import TextEdit
 from components.ui.typing_indicator import TypingIndicator
 from styles import Colors, replying_to_label_style
+from utils import gv
 from utils.time import format_timestamp
 
 
@@ -203,7 +204,7 @@ class ChatBox(QtWidgets.QWidget):
         new_height = int(min(max(doc_height + 10, 50), 150))  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
-    def add_message(self, message_item: MessageType, next=None, previous=None):
+    def add_message(self, message_item: MessageType, previous=None, next=None):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.edit_requested.connect(self.open_edit)
@@ -215,8 +216,12 @@ class ChatBox(QtWidgets.QWidget):
         return message
 
     def add_new_message(self, message_item: MessageType):
-        self.add_message(message_item)
-        if not message_item.is_mine and message_item.status != "read":
+        last_item = self.messages_container.itemAt(self.messages_container.count() - 1).widget()
+        is_from_same = last_item.widget().message_type.sender == message_item.sender # type: ignore
+
+        self.add_message(message_item, previous=is_from_same)
+        last_item.widget().update_previous_next(next=is_from_same) # type: ignore
+        if not self.check_message_is_mine(message_item) and message_item.status != "read":
             self.mark_as_read.emit([message_item.id])
 
     def delete_message(self, message_id: str):
@@ -274,6 +279,11 @@ class ChatBox(QtWidgets.QWidget):
                 self.chat_input.setText("")
                 self.close_reply()
 
+    def check_message_is_mine(self, message: MessageType):
+        user = gv.get("user", {})
+        return message.sender == user.get("id")
+
+
     def load_messages(self, messages: List[MessageType]):
         for i in reversed(range(self.messages_container.count())):
             item = self.messages_container.itemAt(i)
@@ -286,12 +296,13 @@ class ChatBox(QtWidgets.QWidget):
             previous = None
             next = None
             if index != 0:
-                next = messages[index - 1].is_mine
+                previous = message.sender == messages[index - 1].sender
             if index < len(messages) - 1:
-                previous = messages[index + 1].is_mine
+                print("next", message.text, message.sender, messages[+1].sender)
+                next = message.sender == messages[index + 1].sender
             self.add_message(message, previous, next)
 
-            if not message.is_mine and message.status != "read":
+            if not self.check_message_is_mine(message) and message.status != "read":
                 unread_messages.append(message.id)
 
         if unread_messages:
