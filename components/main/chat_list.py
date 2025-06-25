@@ -7,13 +7,13 @@ from chat_types import ChatType, UserType
 from components.ui.chat_list.chat_list_item import ChatListItem
 from components.ui.chat_list.result_item import ResultItem
 from components.ui.iconed_button import IconedButton
+from utils import gv
 from utils.time import format_timestamp
 
 
 class ChatList(QtWidgets.QWidget):
     chat_selected = Signal(str)
     settings_clicked = Signal()
-    send_data = Signal(dict)
 
     def __init__(self):
         super().__init__()
@@ -84,6 +84,8 @@ class ChatList(QtWidgets.QWidget):
     def handle_item_click(self, result_item = None, chat_item = None):
         item = result_item or chat_item
         if item:
+            if gv.get("selected_chat") and gv.get("selected_chat", "").id == item.id:
+                return
             self.set_active_item(item)
             self.chat_selected.emit(str(item.id))
             self.request_load_chat(result_item=result_item, chat_item=chat_item)
@@ -113,7 +115,7 @@ class ChatList(QtWidgets.QWidget):
     def search_chat(self):
         query = self.search_chat_input.text()
         if query:
-            self.send_data.emit({"action": "search_users", "data": {"q": query}})
+            gv.send_data({"action": "search_users", "data": {"q": query}})
         else:
             self.clear_chat_layout()
             for item in self.chat_items:
@@ -127,7 +129,7 @@ class ChatList(QtWidgets.QWidget):
                 widget.setParent(None)
 
     def request_load_chat(self, result_item = None, chat_item = None):
-        self.send_data.emit({"action": "get_messages", "data": {"user_id": result_item.id if result_item else None, "chat_id": chat_item.id if chat_item else None}})
+        gv.send_data({"action": "get_messages", "data": {"user_id": result_item.id if result_item else None, "chat_id": chat_item.id if chat_item else None}})
 
     def load_search_results(self, results: List[UserType]):
         self.clear_chat_layout()

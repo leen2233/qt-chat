@@ -18,7 +18,6 @@ from utils.time import format_timestamp
 
 class ChatBox(QtWidgets.QWidget):
     sidebar_toggled_signal = Signal(bool)
-    message_sent = Signal(dict)
     message_edited = Signal(dict)
     message_deleted = Signal(str)
     mark_as_read = Signal(list)
@@ -208,7 +207,6 @@ class ChatBox(QtWidgets.QWidget):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.edit_requested.connect(self.open_edit)
-        message.delete_requested.connect(lambda i: self.message_deleted.emit(i))
         message.message_highlight.connect(self.highlight_message)
         self.messages_container.addWidget(message)
         QTimer.singleShot(10, self.scroll_to_bottom)
@@ -216,13 +214,17 @@ class ChatBox(QtWidgets.QWidget):
         return message
 
     def add_new_message(self, message_item: MessageType):
-        last_item = self.messages_container.itemAt(self.messages_container.count() - 1).widget()
-        is_from_same = last_item.widget().message_type.sender == message_item.sender # type: ignore
+        if self.messages_container.count() > 0:
+            last_item = self.messages_container.itemAt(self.messages_container.count() - 1).widget()
+            is_from_same = last_item.message_type.sender == message_item.sender # type: ignore
+            last_item.update_previous_next(next=is_from_same) # type: ignore
+        else:
+            is_from_same = False
 
         self.add_message(message_item, previous=is_from_same)
-        last_item.widget().update_previous_next(next=is_from_same) # type: ignore
         if not self.check_message_is_mine(message_item) and message_item.status != "read":
-            self.mark_as_read.emit([message_item.id])
+            data = {'action': 'read_message', "data": {"message_ids": [message_item.id]}}
+            gv.send_data(data) # type: ignore
 
     def delete_message(self, message_id: str):
         for i in reversed(range(self.messages_container.count())):
@@ -264,20 +266,30 @@ class ChatBox(QtWidgets.QWidget):
         if text.strip():
             if self.message_to_edit:
                 data = {
-                    "message_id": self.message_to_edit.id,
-                    "text": text
+                    "action": "edit_message",
+                    "data": {
+                        "message_id": self.message_to_edit.id,
+                        "text": text
+                    }
                 }
-                self.message_edited.emit(data)
                 self.chat_input.setText("")
                 self.close_edit()
             else:
-                data = {
-                    "text": text,
-                    "reply_to": self.reply_to_message.id if self.reply_to_message else None
-                }
-                self.message_sent.emit(data)
-                self.chat_input.setText("")
-                self.close_reply()
+                if gv.get("selected_chat"):
+                    data = {
+                        "action": "new_message",
+                        "data": {
+                            "text": text,
+                            "chat_id": gv.get("selected_chat", "").id,
+                            "reply_to": self.reply_to_message.id if self.reply_to_message else None
+                        }
+                    }
+                    self.chat_input.setText("")
+                    self.close_reply()
+                else:
+                    print("No chat selected")
+
+            gv.send_data(data) # type: ignore
 
     def check_message_is_mine(self, message: MessageType):
         user = gv.get("user", {})
@@ -298,7 +310,6 @@ class ChatBox(QtWidgets.QWidget):
             if index != 0:
                 previous = message.sender == messages[index - 1].sender
             if index < len(messages) - 1:
-                print("next", message.text, message.sender, messages[+1].sender)
                 next = message.sender == messages[index + 1].sender
             self.add_message(message, previous, next)
 
@@ -306,7 +317,8 @@ class ChatBox(QtWidgets.QWidget):
                 unread_messages.append(message.id)
 
         if unread_messages:
-            self.mark_as_read.emit(unread_messages)
+            data = {'action': 'read_message', "data": {"message_ids": unread_messages}}
+            gv.send_data(data) # type: ignore
 
         QTimer.singleShot(100, self.scroll_to_bottom)
 

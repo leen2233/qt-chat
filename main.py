@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import List, Optional
+from typing import Optional
 
 from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
@@ -73,15 +73,10 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list = ChatList()
         self.chat_list.chat_selected.connect(self.chat_selected)
         self.chat_list.settings_clicked.connect(self.open_settings)
-        self.chat_list.send_data.connect(self.send_data)
 
         # Main chat area
         self.chat_area = ChatBox()
         self.chat_area.sidebar_toggled_signal.connect(self.toggle_sidebar)
-        self.chat_area.message_sent.connect(self.send_message)
-        self.chat_area.message_edited.connect(self.edit_message)
-        self.chat_area.message_deleted.connect(self.delete_message)
-        self.chat_area.mark_as_read.connect(self.mark_as_read)
 
         self.splitter.addWidget(self.chat_list)
         self.splitter.addWidget(self.chat_area)
@@ -106,6 +101,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.message_edited.connect(self.chat_area.edit_message)
         self.messages_read.connect(self.chat_area.read_message)
         self.conn.start()
+        gv.set_conn(self.conn)
 
     def setup_shortcuts(self):
         ctrlTab = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Tab"), self)
@@ -132,9 +128,15 @@ class ChatApp(QtWidgets.QMainWindow):
                 break
 
     def chat_selected(self, chat_id):
+        if self.selected_chat:
+            print(self.selected_chat.id == chat_id)
+        if self.selected_chat and chat_id == self.selected_chat.id:
+            return
+        print("heyyyo\n\n\n\n\n\n")
         for chat in self.chats:
             if chat.id == chat_id:
                 self.selected_chat = chat
+                gv.set("selected_chat", self.selected_chat)
                 self.chat_list.set_active_item_by_id(chat.id)
                 self.chat_area.change_chat_user(chat)
                 if self.sidebar_opened:
@@ -165,7 +167,6 @@ class ChatApp(QtWidgets.QMainWindow):
         self.settings_modal = SettingsModal(parent=self.central_widget)
         self.settings_modal.font_applied.connect(self.apply_font)
         self.settings_modal.logout_triggered.connect(self.logout)
-        self.settings_modal.send_data.connect(self.send_data)
         self.settings_modal.move_to_center()
         self.settings_modal.show()
 
@@ -199,29 +200,6 @@ class ChatApp(QtWidgets.QMainWindow):
             # Update the main window and all its children
             self.updateGeometry()
             self.update()
-
-    def send_message(self, data: dict):
-        if self.selected_chat:
-            data["chat_id"] = self.selected_chat.id
-            data = {"action": "new_message", "data": data}
-            self.send_data(data)
-        else:
-            print("No chat selected")
-
-    def edit_message(self, data: dict):
-        data = {"action": "edit_message", "data": data}
-        self.send_data(data)
-
-    def delete_message(self, message_id: str):
-        data = {'action': 'delete_message', "data": {"message_id": message_id}}
-        self.send_data(data)
-
-    def mark_as_read(self, message_ids: List[str]):
-        data = {'action': 'read_message', "data": {"message_ids": message_ids}}
-        self.send_data(data)
-
-    def send_data(self, data):
-        self.conn.send_data(data)
 
     def resizeEvent(self, event):
         """Handle window resize events to reposition the panel if needed"""

@@ -84,7 +84,6 @@ class HighlightableWidget(QtWidgets.QWidget):
 
 class Message(HighlightableWidget):
     reply_clicked = Signal(MessageType)
-    delete_requested = Signal(str)
     edit_requested = Signal(MessageType)
     message_highlight = Signal(int)
 
@@ -361,7 +360,8 @@ class Message(HighlightableWidget):
             self.reply_clicked.emit(self.message_type)
 
         elif action == delete_action:
-            self.delete_requested.emit(self.message_type.id)
+            data = {'action': 'delete_message', "data": {"message_id": self.message_type.id}}
+            gv.send_data(data) # type: ignore
 
         elif action == edit_action:
             self.edit_requested.emit(self.message_type)

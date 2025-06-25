@@ -204,7 +204,6 @@ class FontSettings(QFrame):
 
 class EditProfile(QFrame):
     close_clicked = Signal()
-    send_data = Signal(dict)
 
     def __init__(self, parent=None, user: dict = {}):
         super().__init__(parent=parent)
@@ -358,7 +357,7 @@ class EditProfile(QFrame):
                 "avatar": avatar_url
             }
         }
-        self.send_data.emit(data)
+        gv.send_data(data)
 
     def select_avatar(self):
         """Open file dialog to select new avatar"""
@@ -378,7 +377,6 @@ class EditProfile(QFrame):
 class SettingsModal(QFrame):
     font_applied = Signal(str)
     logout_triggered = Signal()
-    send_data = Signal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -482,7 +480,6 @@ class SettingsModal(QFrame):
     def open_edit_profile_settings(self):
         frame = EditProfile(self, user=self.user)
         frame.close_clicked.connect(self.close)
-        frame.send_data.connect(lambda data: self.send_data.emit(data))
         frame.show()
 
     def logout(self):
