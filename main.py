@@ -21,7 +21,7 @@ from utils.action_handler import ActionHandler
 class ChatApp(QtWidgets.QMainWindow):
     show_login_window = Signal()
     search_results_received = Signal(list)
-    fetched_chats = Signal(list)
+    # fetched_chats = Signal(list)
     fetched_messages = Signal(list, bool, bool)
     new_message = Signal(MessageType, str)
     message_deleted = Signal(str)
@@ -93,8 +93,8 @@ class ChatApp(QtWidgets.QMainWindow):
             self.apply_font(self.config.get("ui", "font"))
 
         self.search_results_received.connect(self.chat_list.load_search_results)
-        self.fetched_chats.connect(self.chat_list.load_chats)
-        self.fetched_messages.connect(self.chat_area.load_messages)
+        # self.fetched_chats.connect(self.chat_list.load_chats)
+        # self.fetched_messages.connect(self.chat_area.load_messages)
         self.new_message.connect(self.on_new_message)
         self.on_logout.connect(self.logout)
         self.message_deleted.connect(self.chat_area.delete_message)
@@ -128,22 +128,18 @@ class ChatApp(QtWidgets.QMainWindow):
                 break
 
     def chat_selected(self, chat_id):
-        if self.selected_chat:
-            print(self.selected_chat.id == chat_id)
         if self.selected_chat and chat_id == self.selected_chat.id:
             return
-        print("heyyyo\n\n\n\n\n\n")
         for chat in self.chats:
             if chat.id == chat_id:
                 self.selected_chat = chat
                 gv.set("selected_chat", self.selected_chat)
                 self.chat_list.set_active_item_by_id(chat.id)
-                self.chat_area.change_chat_user(chat)
                 if self.sidebar_opened:
                     self.sidebar.change_chat(chat)
 
-                data = {"action": "get_messages", "data": {"chat_id": chat.id}}
-                self.conn.send_data(data)
+                # data = {"action": "get_messages", "data": {"chat_id": chat.id}}
+                # self.conn.send_data(data)
 
     def sidebar_closed(self, state):
         self.sidebar_opened = False

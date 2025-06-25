@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List
 
 import qtawesome as qta
@@ -5,7 +6,6 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QHBoxLayout
-from qtawesome.iconic_font import QApplication
 
 from chat_types import ChatType, MessageType
 from components.ui.message import Message
@@ -33,6 +33,9 @@ class ChatBox(QtWidgets.QWidget):
         self.message_to_edit = None
         self.has_more = False
         self.setContentsMargins(0, 0, 0, 0)
+
+        gv.signal_manager.messages_changed.connect(self.load_messages)
+        gv.signal_manager.selected_chat_changed.connect(self.selected_chat_changed)
 
         self.setStyleSheet("""
             QWidget { background-color: #262624; color: #ffffff; }
@@ -119,7 +122,7 @@ class ChatBox(QtWidgets.QWidget):
         # Container for messages
         self.messages_widget = QtWidgets.QWidget()
         self.messages_container = QtWidgets.QVBoxLayout(self.messages_widget)
-        self.messages_container.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        # self.messages_container.setAlignment(Qt.AlignmentFlag.AlignBottom)
         self.messages_container.setContentsMargins(0, 0, 0, 20)
         self.messages_container.setSpacing(0)
         self.messages_container.addStretch()
@@ -201,20 +204,37 @@ class ChatBox(QtWidgets.QWidget):
         self.main_layout.addWidget(self.scroll_area)
         self.main_layout.addLayout(self.input_part)
 
+    # def chats_changed(self, chats):
+    #     for chat in chats:
+    #         if self.chat:
+    #             if chat.id == self.chat.id:
+    #                 # self.change_chat_user(chat)
+    #                 self.load_messages(chat.messages, False)
+    #                 self.chat = deepcopy(chat)
+
+    def selected_chat_changed(self, chat):
+        if chat:
+            self.change_chat_user(chat)
+            self.chat = deepcopy(chat)
+
+            if not gv.get(f"chat_messages_{chat.id}"):
+                data = {"action": "get_messages", "data": {"chat_id": gv.get("selected_chat", "").id}}
+                gv.send_data(data)
+            else:
+                self.load_messages(gv.get(f"chat_messages_{chat.id}", []))
+                QTimer.singleShot(100, self.scroll_to_bottom)
+
     def adjust_input_height(self):
         doc_height = self.chat_input.document().size().height()
         new_height = int(min(max(doc_height + 10, 50), 150))  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
-    def add_message(self, message_item: MessageType, previous=None, next=None, to_beginning=False):
+    def add_message(self, message_item: MessageType, previous=None, next=None):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.edit_requested.connect(self.open_edit)
         message.message_highlight.connect(self.highlight_message)
-        if to_beginning:
-            self.messages_container.insertWidget(0, message)
-        else:
-            self.messages_container.addWidget(message)
+        self.messages_container.addWidget(message)
         QTimer.singleShot(10, self.scroll_to_bottom)
 
         return message
@@ -301,17 +321,15 @@ class ChatBox(QtWidgets.QWidget):
         user = gv.get("user", {})
         return message.sender == user.get("id")
 
-    def load_messages(self, messages: List[MessageType], has_more, clear=True):
-        self.has_more = has_more
-        if clear:
-            for i in reversed(range(self.messages_container.count())):
-                item = self.messages_container.itemAt(i)
-                if item.widget():  # Check if item has a widget
-                    item.widget().deleteLater()
-                self.messages_container.removeItem(item)
+    def load_messages(self, data):
+        messages = data.get("messages", [])
+        self.has_more = data.get("has_more")
+        while self.messages_container.count() > 1:
+            item = self.messages_container.takeAt(1)
+            if item and item.widget():
+                item.widget().deleteLater()
 
         unread_messages = []
-        messages.reverse()
         for index, message in enumerate(messages):
             previous = None
             next = None
@@ -319,7 +337,7 @@ class ChatBox(QtWidgets.QWidget):
                 next = message.sender == messages[index - 1].sender
             if index < len(messages) - 1:
                 previous = message.sender == messages[index + 1].sender
-            self.add_message(message, previous, next, to_beginning=True)
+            self.add_message(message, previous, next)
 
             if not self.check_message_is_mine(message) and message.status != "read":
                 unread_messages.append(message.id)
@@ -337,7 +355,7 @@ class ChatBox(QtWidgets.QWidget):
         else:
             self.last_seen.setText(format_timestamp(chat.user.last_seen))
             self.last_seen.setStyleSheet("color: grey; font-size: 14px")
-        self.chat = chat
+        # self.chat = chat
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def sidebar_toggle(self):
@@ -391,7 +409,6 @@ class ChatBox(QtWidgets.QWidget):
     def open_edit(self, message: MessageType):
         index = int(self.edit_text.width() / 5.8)
         self.message_to_edit = message
-        print(message.text, index, message.text[:index])
         self.edit_text.setText(message.text)
         self.chat_input.setText(message.text)
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
@@ -413,6 +430,6 @@ class ChatBox(QtWidgets.QWidget):
         if value == self.scroll_area.verticalScrollBar().minimum():
             if self.has_more:
                 # load more messages:
-                first_message = self.messages_container.itemAt(0).widget()
+                first_message = self.messages_container.itemAt(1).widget() # because 1st is QSpacer
                 data = {"action": "get_messages", "data": {"chat_id": gv.get("selected_chat", "").id, "last_message": first_message.message_type.id}}
                 gv.send_data(data)

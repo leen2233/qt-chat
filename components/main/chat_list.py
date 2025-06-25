@@ -18,6 +18,8 @@ class ChatList(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.active_item = None
+        gv.signal_manager.chats_changed.connect(self.load_chats)
+
         self.setMinimumWidth(250)
         self.setMaximumWidth(400)
         self.setObjectName("Sidebar")
@@ -77,7 +79,7 @@ class ChatList(QtWidgets.QWidget):
             self.chat_items.append(item)
             self.chats_layout.addWidget(self.chat_items[-1])
 
-        if self.chat_items:
+        if self.chat_items and not gv.get("selected_chat"):
             self.set_active_item(self.chat_items[0])
             self.chat_selected.emit(str(self.chat_items[0].id))
 
@@ -88,7 +90,6 @@ class ChatList(QtWidgets.QWidget):
                 return
             self.set_active_item(item)
             self.chat_selected.emit(str(item.id))
-            self.request_load_chat(result_item=result_item, chat_item=chat_item)
 
 
     def set_active_item_by_id(self, chat_id):

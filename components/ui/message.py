@@ -101,8 +101,8 @@ class Message(HighlightableWidget):
         self.set_width = False
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground)
-        self.setStyleSheet("border-radius: 20px; padding: 0px; margin: 0px")
-        # self.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet("border-radius: 20px; padding: 0px; margin: 0px;")
+        self.setContentsMargins(0, 0, 0, 0)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
         top_margin = 2 if self.previous else 10

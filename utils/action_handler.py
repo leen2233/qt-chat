@@ -6,7 +6,7 @@ class ActionHandler:
     def __init__(self, data, window) -> None:
         self.window = window
         self.data = data
-        print("\n[RECV]", self.data, end="\n")
+        # print("\n[RECV]", self.data, end="\n")
 
     def handle(self):
         if hasattr(self, self.data.get("action")):
@@ -37,6 +37,7 @@ class ActionHandler:
     def get_messages(self):
         results = self.data.get("data", {}).get("results")
         has_more = self.data.get("data", {}).get("has_more")
+        chat_id = self.data.get("data", {}).get("chat").get("id")
         messages = []
         for message_data in results:
             if message_data.get("reply_to"):
@@ -44,9 +45,13 @@ class ActionHandler:
 
             messages.append(MessageType(**message_data))
 
-        is_same_chat = self.data.get("data", {}).get("chat", {}).get("id") == gv.get("selected_chat", "").id
+        existing_messages = gv.get(f"chat_messages_{chat_id}", {}).get("messages")
+        if existing_messages:
+            messages.extend(existing_messages)
 
-        self.window.fetched_messages.emit(messages, has_more, not(is_same_chat))
+        gv.set(f"chat_messages_{chat_id}", {"messages": messages, "has_more": has_more})
+
+        # self.window.fetched_messages.emit(messages, has_more, not(is_same_chat))
 
     def get_chats(self):
         try:
@@ -63,7 +68,8 @@ class ActionHandler:
                 )
                 chats.append(chat_obj)
             self.window.chats = chats
-            self.window.fetched_chats.emit(chats)
+            gv.set("chats", chats)
+            # self.window.fetched_chats.emit(chats)
         except Exception as e:
             print(e, "error")
 
@@ -92,8 +98,6 @@ class ActionHandler:
         status = self.data.get("data", {}).get("status")
         last_seen = self.data.get("data", {}).get("last_seen")
 
-        print(f"[[[  {user_id}  -  {status} -  {last_seen} ]]]")
-
         chats = self.window.chats
         for chat in chats:
             if chat.user and chat.user.id == user_id:
@@ -101,7 +105,8 @@ class ActionHandler:
                 chat.user.last_seen = last_seen
 
         self.window.chats = chats
-        self.window.fetched_chats.emit(chats)
+        gv.set("chats", chats)
+        # self.window.fetched_chats.emit(chats)
 
     def read_message(self):
         message_ids = self.data.get("data", {}).get("ids")
