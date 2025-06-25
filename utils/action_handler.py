@@ -1,4 +1,5 @@
 from chat_types import ChatType, MessageType, UserType
+from utils import gv
 
 
 class ActionHandler:
@@ -35,6 +36,7 @@ class ActionHandler:
 
     def get_messages(self):
         results = self.data.get("data", {}).get("results")
+        has_more = self.data.get("data", {}).get("has_more")
         messages = []
         for message_data in results:
             if message_data.get("reply_to"):
@@ -42,7 +44,9 @@ class ActionHandler:
 
             messages.append(MessageType(**message_data))
 
-        self.window.fetched_messages.emit(messages)
+        is_same_chat = self.data.get("data", {}).get("chat", {}).get("id") == gv.get("selected_chat", "").id
+
+        self.window.fetched_messages.emit(messages, has_more, not(is_same_chat))
 
     def get_chats(self):
         try:

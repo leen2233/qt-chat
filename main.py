@@ -22,7 +22,7 @@ class ChatApp(QtWidgets.QMainWindow):
     show_login_window = Signal()
     search_results_received = Signal(list)
     fetched_chats = Signal(list)
-    fetched_messages = Signal(list)
+    fetched_messages = Signal(list, bool, bool)
     new_message = Signal(MessageType, str)
     message_deleted = Signal(str)
     message_edited = Signal(dict)

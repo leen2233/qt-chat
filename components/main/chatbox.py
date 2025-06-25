@@ -5,6 +5,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QHBoxLayout
+from qtawesome.iconic_font import QApplication
 
 from chat_types import ChatType, MessageType
 from components.ui.message import Message
@@ -30,6 +31,7 @@ class ChatBox(QtWidgets.QWidget):
         self.reply_to_message = None
         self.edit_opened = False
         self.message_to_edit = None
+        self.has_more = False
         self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet("""
@@ -112,6 +114,7 @@ class ChatBox(QtWidgets.QWidget):
             """)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        self.scroll_area.verticalScrollBar().valueChanged.connect(self.on_scroll)
 
         # Container for messages
         self.messages_widget = QtWidgets.QWidget()
@@ -203,12 +206,15 @@ class ChatBox(QtWidgets.QWidget):
         new_height = int(min(max(doc_height + 10, 50), 150))  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
-    def add_message(self, message_item: MessageType, previous=None, next=None):
+    def add_message(self, message_item: MessageType, previous=None, next=None, to_beginning=False):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.edit_requested.connect(self.open_edit)
         message.message_highlight.connect(self.highlight_message)
-        self.messages_container.addWidget(message)
+        if to_beginning:
+            self.messages_container.insertWidget(0, message)
+        else:
+            self.messages_container.addWidget(message)
         QTimer.singleShot(10, self.scroll_to_bottom)
 
         return message
@@ -295,23 +301,25 @@ class ChatBox(QtWidgets.QWidget):
         user = gv.get("user", {})
         return message.sender == user.get("id")
 
-
-    def load_messages(self, messages: List[MessageType]):
-        for i in reversed(range(self.messages_container.count())):
-            item = self.messages_container.itemAt(i)
-            if item.widget():  # Check if item has a widget
-                item.widget().deleteLater()
-            self.messages_container.removeItem(item)
+    def load_messages(self, messages: List[MessageType], has_more, clear=True):
+        self.has_more = has_more
+        if clear:
+            for i in reversed(range(self.messages_container.count())):
+                item = self.messages_container.itemAt(i)
+                if item.widget():  # Check if item has a widget
+                    item.widget().deleteLater()
+                self.messages_container.removeItem(item)
 
         unread_messages = []
+        messages.reverse()
         for index, message in enumerate(messages):
             previous = None
             next = None
             if index != 0:
-                previous = message.sender == messages[index - 1].sender
+                next = message.sender == messages[index - 1].sender
             if index < len(messages) - 1:
-                next = message.sender == messages[index + 1].sender
-            self.add_message(message, previous, next)
+                previous = message.sender == messages[index + 1].sender
+            self.add_message(message, previous, next, to_beginning=True)
 
             if not self.check_message_is_mine(message) and message.status != "read":
                 unread_messages.append(message.id)
@@ -319,8 +327,6 @@ class ChatBox(QtWidgets.QWidget):
         if unread_messages:
             data = {'action': 'read_message', "data": {"message_ids": unread_messages}}
             gv.send_data(data) # type: ignore
-
-        QTimer.singleShot(100, self.scroll_to_bottom)
 
     def change_chat_user(self, chat: ChatType):
         self.avatar.change_source(chat.user.avatar)
@@ -402,3 +408,11 @@ class ChatBox(QtWidgets.QWidget):
             self.animation.setEasingCurve(QtCore.QEasingCurve.Type.InOutQuad)  # Smooth animation curve
             self.animation.start()
             self.edit_opened = True
+
+    def on_scroll(self, value):
+        if value == self.scroll_area.verticalScrollBar().minimum():
+            if self.has_more:
+                # load more messages:
+                first_message = self.messages_container.itemAt(0).widget()
+                data = {"action": "get_messages", "data": {"chat_id": gv.get("selected_chat", "").id, "last_message": first_message.message_type.id}}
+                gv.send_data(data)
