@@ -10,6 +10,7 @@ class MessageType:
     time: float
     status: str = "sending"
     is_mine: Optional[bool] = False
+    chat_id: Optional[str] = None
 
     reply_to: Optional["MessageType"] = None
 

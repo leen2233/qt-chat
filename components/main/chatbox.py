@@ -249,7 +249,7 @@ class ChatBox(QtWidgets.QWidget):
 
         self.add_message(message_item, previous=is_from_same)
         if not self.check_message_is_mine(message_item) and message_item.status != "read":
-            data = {'action': 'read_message', "data": {"message_ids": [message_item.id]}}
+            data = {'action': 'read_message', "data": {"message_ids": [message_item.id], "chat_id": message_item.chat_id}}
             gv.send_data(data) # type: ignore
 
     def delete_message(self, message_id: str):
@@ -342,8 +342,9 @@ class ChatBox(QtWidgets.QWidget):
             if not self.check_message_is_mine(message) and message.status != "read":
                 unread_messages.append(message.id)
 
-        if unread_messages:
-            data = {'action': 'read_message', "data": {"message_ids": unread_messages}}
+        chat = gv.get('selected_chat')
+        if unread_messages and chat:
+            data = {'action': 'read_message', "data": {"message_ids": unread_messages, "chat_id": chat.id}}
             gv.send_data(data) # type: ignore
 
     def change_chat_user(self, chat: ChatType):

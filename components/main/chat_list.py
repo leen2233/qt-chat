@@ -75,7 +75,7 @@ class ChatList(QtWidgets.QWidget):
             item = ChatListItem(chat)
             item.clicked.connect(lambda item: self.handle_item_click(chat_item=item))
             self.chat_items.append(item)
-            if item.chat.id == gv.get("selected_chat").id:
+            if gv.get("selected_chat") and item.chat.id == gv.get("selected_chat").id:
                 self.set_active_item(item)
             self.chats_layout.addWidget(self.chat_items[-1])
 

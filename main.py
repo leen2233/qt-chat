@@ -21,12 +21,7 @@ from utils.action_handler import ActionHandler
 class ChatApp(QtWidgets.QMainWindow):
     show_login_window = Signal()
     search_results_received = Signal(list)
-    # fetched_chats = Signal(list)
     fetched_messages = Signal(list, bool, bool)
-    new_message = Signal(MessageType, str)
-    message_deleted = Signal(str)
-    message_edited = Signal(dict)
-    messages_read = Signal(list)
     on_logout = Signal()
 
     def __init__(self, settings_instance: str):
@@ -91,13 +86,7 @@ class ChatApp(QtWidgets.QMainWindow):
             self.apply_font(self.config.get("ui", "font"))
 
         self.search_results_received.connect(self.chat_list.load_search_results)
-        # self.fetched_chats.connect(self.chat_list.load_chats)
-        # self.fetched_messages.connect(self.chat_area.load_messages)
-        self.new_message.connect(self.on_new_message)
         self.on_logout.connect(self.logout)
-        self.message_deleted.connect(self.chat_area.delete_message)
-        self.message_edited.connect(self.chat_area.edit_message)
-        self.messages_read.connect(self.chat_area.read_message)
         gv.load_data()
         self.conn.start()
         gv.set_conn(self.conn)
@@ -205,17 +194,10 @@ class ChatApp(QtWidgets.QMainWindow):
     def on_message(self, data):
         ActionHandler(data, self).handle()
 
-    def on_new_message(self, message_item: MessageType, chat_id: str):
-        if gv.get("selected_chat") and gv.get("selected_chat").id == chat_id:
-            self.chat_area.add_new_message(message_item)
-
     def on_authenticate(self, data: dict):
-        print(not gv.get("chats"), gv.get("chats"))
-        if not gv.get("chats"):
-            data_to_send = {"action": "get_chats"}
-            self.conn.send_data(data_to_send)
         self.user = data.get("data", {}).get('user', {})
         gv.set("user", self.user)
+        gv.set("is_authenticated", True)
 
     def closeEvent(self, event) -> None:
         self.conn.stop()
@@ -231,6 +213,8 @@ if __name__ == "__main__":
     settings_instance = "Veia"
     if args.instance > 0:
         settings_instance = f"Veia_{args.instance}"
+
+    gv.set_instance(args.instance)
 
     settings = QSettings("Veia Sp.", settings_instance)
     refresh_token = settings.value("refresh_token")

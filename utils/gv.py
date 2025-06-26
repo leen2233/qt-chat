@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 from copy import deepcopy
@@ -10,9 +11,10 @@ from chat_types import ChatType, MessageType, UserType
 from lib.conn import Conn
 
 data = {}
-
+data_loaded = False
 _conn: Optional[Conn] = None
-
+instance = 0
+DATA_BLACKLIST = ["is_authenticated"]
 
 class SignalManager(QObject):
     chats_changed = Signal(list)
@@ -47,6 +49,13 @@ def set(key, value):
     elif key.startswith("chat_messages_"):
         if data["selected_chat"].id and data["selected_chat"].id == key.split("chat_messages_")[1]:
             signal_manager.messages_changed.emit(value)
+    elif key == "is_authenticated" and value:
+        if data_loaded and data.get("last_updated_time"):
+            data_to_send = {'action': "get_updates", "data": {"last_time": data.get("last_updated_time")}}
+        else:
+            data_to_send = {'action': "get_chats", "data": {}}
+        send_data(data_to_send)
+        return
 
     save_data(data)
 
@@ -70,25 +79,30 @@ def send_data(data: dict):
 
 
 def save_data(data: dict):
-    with open("data.json", "w") as f:
+    with open(f"data{instance}.json", "w") as f:
         data_to_save = deepcopy(data)
+        for key, value in data.items():
+            if key in DATA_BLACKLIST:
+                data_to_save.pop(key)
+
         data_to_save["chats"] = [asdict(item) for item in data_to_save.get("chats", [])]
         data_to_save["selected_chat"] = asdict(data_to_save["selected_chat"]) if data_to_save.get("selected_chat") else {}
         for key, value in data_to_save.items():
             if key.startswith("chat_messages_"):
                 data_to_save[key]["messages"] = [asdict(item) for item in value.get('messages', [])]
+        data_to_save["last_updated_time"] = datetime.now().timestamp()
 
         f.write(json.dumps(data_to_save))
 
 
 def load_data():
-    global data
+    global data, data_loaded
 
-    if not os.path.exists("data.json"):
-        with open("data.json", "w") as f:
+    if not os.path.exists(f"data{instance}.json"):
+        with open(f"data{instance}.json", "w") as f:
             f.write("{}")
 
-    with open("data.json", "r") as file:
+    with open(f"data{instance}.json", "r") as file:
         try:
             loaded_data = json.load(file)
         except Exception as e:
@@ -107,11 +121,20 @@ def load_data():
         if key.startswith("chat_messages_"):
             loaded_data[key]["messages"] = [MessageType(**item) for item in value.get('messages', [])]
 
-    data = loaded_data
+    for key, value in loaded_data.items():
+        if value:
+            data[key] = value
+    data_loaded = True
 
-    signal_manager.chats_changed.emit(data["chats"])
-    signal_manager.selected_chat_changed.emit(data["selected_chat"])
+    signal_manager.chats_changed.emit(data.get("chats", []))
+    if data.get("selected_chat"):
+        signal_manager.selected_chat_changed.emit(data.get("selected_chat"))
 
     for key, value in loaded_data.items():
         if key.startswith("chat_messages_") and data["selected_chat"].id and data["selected_chat"].id == key.split("chat_messages_")[1]:
             signal_manager.messages_changed.emit(data[key])
+
+
+def set_instance(instance_number):
+    global instance
+    instance = instance_number
