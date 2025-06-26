@@ -205,11 +205,12 @@ class FontSettings(QFrame):
 class EditProfile(QFrame):
     close_clicked = Signal()
 
-    def __init__(self, parent=None, user: dict = {}):
+    def __init__(self, parent=None, user: dict = {}, settings=None):
         super().__init__(parent=parent)
         self.selected_font = None
         self.user = user
         self.avatar_path = None
+        self.settings = settings
 
         self.setObjectName("fontsSettings")
         self.setStyleSheet("""
@@ -336,11 +337,12 @@ class EditProfile(QFrame):
 
     def save(self):
         avatar_url = None
-        if self.avatar_path:
+        if self.avatar_path and self.settings:
             with open(self.avatar_path, 'rb') as f:
                 files = {"file": f}
+                data = {"token": self.settings.value("refresh_token")}
                 if env.IMAGE_HOST:
-                    response = requests.post(env.IMAGE_HOST, files=files)
+                    response = requests.post(env.IMAGE_HOST, data=data, files=files)
                     if response.status_code == 200:
                         avatar_url = response.json().get("url")
                     else:
@@ -378,9 +380,10 @@ class SettingsModal(QFrame):
     font_applied = Signal(str)
     logout_triggered = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         super().__init__(parent=parent)
         self.user = gv.get("user", {})
+        self.settings = settings
 
         self.setObjectName("floatingPanel")
         self.setStyleSheet("""
@@ -478,7 +481,7 @@ class SettingsModal(QFrame):
         frame.show()
 
     def open_edit_profile_settings(self):
-        frame = EditProfile(self, user=self.user)
+        frame = EditProfile(self, user=self.user, settings=self.settings)
         frame.close_clicked.connect(self.close)
         frame.show()
 

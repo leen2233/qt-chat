@@ -141,7 +141,7 @@ class ChatApp(QtWidgets.QMainWindow):
             self.sidebar.hide_animation(on_finished=remove_sidebar)
 
     def open_settings(self):
-        self.settings_modal = SettingsModal(parent=self.central_widget)
+        self.settings_modal = SettingsModal(self.settings, parent=self.central_widget)
         self.settings_modal.font_applied.connect(self.apply_font)
         self.settings_modal.logout_triggered.connect(self.logout)
         self.settings_modal.move_to_center()
