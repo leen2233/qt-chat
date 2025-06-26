@@ -6,7 +6,7 @@ from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
 
 import env
-from chat_types import ChatType, MessageType
+from chat_types import MessageType
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
 from components.main.login import Login
@@ -44,7 +44,6 @@ class ChatApp(QtWidgets.QMainWindow):
         self.connected = False
         self.chats = []
 
-        self.selected_chat: Optional[ChatType] = None
         self.sidebar_opened = False
 
         self.settings_modal = None
@@ -71,7 +70,6 @@ class ChatApp(QtWidgets.QMainWindow):
 
         # chat list1
         self.chat_list = ChatList()
-        self.chat_list.chat_selected.connect(self.chat_selected)
         self.chat_list.settings_clicked.connect(self.open_settings)
 
         # Main chat area
@@ -100,6 +98,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.message_deleted.connect(self.chat_area.delete_message)
         self.message_edited.connect(self.chat_area.edit_message)
         self.messages_read.connect(self.chat_area.read_message)
+        gv.load_data()
         self.conn.start()
         gv.set_conn(self.conn)
 
@@ -111,35 +110,28 @@ class ChatApp(QtWidgets.QMainWindow):
 
     def select_next_chat(self):
         for index, chat in enumerate(self.chats):
-            if chat == self.selected_chat:
+            if chat == gv.get("selected_chat"):
                 if index == len(self.chats) - 1:
-                    self.chat_selected(self.chats[0].id)
+                    self.select_chat_by_id(self.chats[0].id)
                 else:
-                    self.chat_selected(self.chats[index + 1].id)
+                    self.select_chat_by_id(self.chats[index + 1].id)
                 break
 
     def select_previous_chat(self):
         for index, chat in enumerate(self.chats):
-            if chat == self.selected_chat:
+            if chat == gv.get("selected_chat"):
                 if index == 0:
-                    self.chat_selected(self.chats[-1].id)
+                    self.select_chat_by_id(self.chats[-1].id)
                 else:
-                    self.chat_selected(self.chats[index - 1].id)
+                    self.select_chat_by_id(self.chats[index - 1].id)
                 break
 
-    def chat_selected(self, chat_id):
-        if self.selected_chat and chat_id == self.selected_chat.id:
-            return
+    def select_chat_by_id(self, chat_id):
         for chat in self.chats:
             if chat.id == chat_id:
-                self.selected_chat = chat
-                gv.set("selected_chat", self.selected_chat)
+                gv.set("selected_chat", chat)
                 self.chat_list.set_active_item_by_id(chat.id)
-                if self.sidebar_opened:
-                    self.sidebar.change_chat(chat)
 
-                # data = {"action": "get_messages", "data": {"chat_id": chat.id}}
-                # self.conn.send_data(data)
 
     def sidebar_closed(self, state):
         self.sidebar_opened = False
@@ -147,7 +139,7 @@ class ChatApp(QtWidgets.QMainWindow):
 
     def toggle_sidebar(self, state: bool):
         if state is True:
-            self.sidebar = Sidebar(self.selected_chat)
+            self.sidebar = Sidebar()
             self.sidebar.sidebar_closed.connect(self.sidebar_closed)
             self.splitter.addWidget(self.sidebar)
             self.sidebar_opened = True
@@ -214,12 +206,14 @@ class ChatApp(QtWidgets.QMainWindow):
         ActionHandler(data, self).handle()
 
     def on_new_message(self, message_item: MessageType, chat_id: str):
-        if self.selected_chat and self.selected_chat.id == chat_id:
+        if gv.get("selected_chat") and gv.get("selected_chat").id == chat_id:
             self.chat_area.add_new_message(message_item)
 
     def on_authenticate(self, data: dict):
-        data_to_send = {"action": "get_chats"}
-        self.conn.send_data(data_to_send)
+        print(not gv.get("chats"), gv.get("chats"))
+        if not gv.get("chats"):
+            data_to_send = {"action": "get_chats"}
+            self.conn.send_data(data_to_send)
         self.user = data.get("data", {}).get('user', {})
         gv.set("user", self.user)
 

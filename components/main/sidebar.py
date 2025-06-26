@@ -1,4 +1,3 @@
-from typing import Optional
 
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
@@ -9,6 +8,7 @@ from chat_types import ChatType
 from components.ui.iconed_button import IconedButton
 from components.ui.rounded_avatar import RoundedAvatar
 from styles import Colors
+from utils import gv
 from utils.time import format_timestamp
 
 
@@ -23,7 +23,7 @@ class Divider(QtWidgets.QWidget):
 class Sidebar(QtWidgets.QWidget):
     sidebar_closed = QtCore.Signal(str)
 
-    def __init__(self, chat: Optional[ChatType] = None, parent=None, *args, **kwargs):
+    def __init__(self, parent=None, *args, **kwargs):
         super().__init__(parent)
         self.setMinimumWidth(300)
         self.setMaximumWidth(500)
@@ -34,6 +34,8 @@ class Sidebar(QtWidgets.QWidget):
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         self.main_layout.setSpacing(20)
+
+        gv.signal_manager.selected_chat_changed.connect(self.change_chat)
 
         header_layout = QtWidgets.QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -58,6 +60,8 @@ class Sidebar(QtWidgets.QWidget):
         username_time_layout.setContentsMargins(0, 0, 0, 0)
         username_time_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         username_time_layout.setSpacing(0)
+
+        chat = gv.get("selected_chat")
 
         self.name = QtWidgets.QLabel(chat.user.display_name if chat else "")
         self.name.setStyleSheet("font-size: 20px; color: white;")

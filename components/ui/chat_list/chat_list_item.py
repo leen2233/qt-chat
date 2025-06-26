@@ -6,14 +6,15 @@ from qtpy.QtWidgets import QWidgetAction
 
 from components.ui.rounded_avatar import RoundedAvatar
 from styles import context_menu_style
+from utils.time import format_timestamp
 
 
 class ChatListItem(QtWidgets.QWidget):
     clicked = Signal(object)  # Signal when item is clicked
 
-    def __init__(self, id, avatar, name, last_message, time):
+    def __init__(self, chat):
         super().__init__()
-        self.id = id
+        self.chat = chat
         self.setFixedHeight(70)
         self.setObjectName("chat-list-item")
         self.setMouseTracking(True)
@@ -37,7 +38,7 @@ class ChatListItem(QtWidgets.QWidget):
         self.main_layout.setContentsMargins(10, 0, 0, 0)
         self.main_layout.setSpacing(0)
 
-        self.avatar = RoundedAvatar(avatar)
+        self.avatar = RoundedAvatar(self.chat.user.avatar)
 
         # Add avatar container to layout
         self.main_layout.addWidget(self.avatar)
@@ -49,14 +50,14 @@ class ChatListItem(QtWidgets.QWidget):
         self.name_time_part.setSpacing(0)
         self.name_time_part.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.name_label = QtWidgets.QLabel(name)
+        self.name_label = QtWidgets.QLabel(self.chat.user.display_name)
         self.name_label.setStyleSheet(
             "font-weight: bold; background-color: transparent; border-color: transparent; color: white"
         )
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.name_label.setContentsMargins(10, 0, 0, 0)
 
-        self.time_label = QtWidgets.QLabel(time)
+        self.time_label = QtWidgets.QLabel(format_timestamp(chat.updated_at))
         self.time_label.setStyleSheet(
             "font-size: 12px; color: #888; background-color: transparent; border-color: transparent"
         )
@@ -67,7 +68,7 @@ class ChatListItem(QtWidgets.QWidget):
         self.name_time_part.addWidget(self.name_label)
         self.name_time_part.addWidget(self.time_label)
 
-        self.last_message_label = QtWidgets.QLabel(last_message)
+        self.last_message_label = QtWidgets.QLabel(self.chat.last_message)
         self.last_message_label.setContentsMargins(10, 0, 0, 15)
         self.last_message_label.setStyleSheet(
             "font-size: 14px; color: #ccc; background-color: transparent; border-color: transparent"

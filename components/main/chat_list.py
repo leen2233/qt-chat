@@ -8,17 +8,16 @@ from components.ui.chat_list.chat_list_item import ChatListItem
 from components.ui.chat_list.result_item import ResultItem
 from components.ui.iconed_button import IconedButton
 from utils import gv
-from utils.time import format_timestamp
 
 
 class ChatList(QtWidgets.QWidget):
-    chat_selected = Signal(str)
     settings_clicked = Signal()
 
     def __init__(self):
         super().__init__()
         self.active_item = None
         gv.signal_manager.chats_changed.connect(self.load_chats)
+        gv.signal_manager.selected_chat_changed.connect(lambda chat: self.set_active_item_by_id(chat.id))
 
         self.setMinimumWidth(250)
         self.setMaximumWidth(400)
@@ -73,28 +72,29 @@ class ChatList(QtWidgets.QWidget):
         self.clear_chat_layout()
         self.chat_items = []
         for chat in chats:
-            updated_at_str = format_timestamp(chat.updated_at)
-            item = ChatListItem(chat.id, chat.user.avatar, chat.user.display_name, chat.last_message, updated_at_str)
+            item = ChatListItem(chat)
             item.clicked.connect(lambda item: self.handle_item_click(chat_item=item))
             self.chat_items.append(item)
+            if item.chat.id == gv.get("selected_chat").id:
+                self.set_active_item(item)
             self.chats_layout.addWidget(self.chat_items[-1])
 
         if self.chat_items and not gv.get("selected_chat"):
             self.set_active_item(self.chat_items[0])
-            self.chat_selected.emit(str(self.chat_items[0].id))
+            gv.set("selected_chat", self.chat_items[0].chat)
 
     def handle_item_click(self, result_item = None, chat_item = None):
         item = result_item or chat_item
         if item:
-            if gv.get("selected_chat") and gv.get("selected_chat", "").id == item.id:
+            if gv.get("selected_chat") and gv.get("selected_chat", "").id == item.chat.id:
                 return
             self.set_active_item(item)
-            self.chat_selected.emit(str(item.id))
+            gv.set("selected_chat", item.chat)
 
 
     def set_active_item_by_id(self, chat_id):
         for item in self.chat_items:
-            if item.id == chat_id:
+            if item.chat.id == chat_id:
                 self.set_active_item(item)
                 break
 
