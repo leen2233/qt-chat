@@ -235,7 +235,7 @@ class EditProfile(QFrame):
 
         avatar_layout = QHBoxLayout()
         avatar_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.avatar = RoundedAvatar(self.user.get("avatar"))
+        self.avatar = RoundedAvatar(self.user.get("avatar"), name=self.user.get("display_name", ""))
         self.avatar.setStyleSheet("background-color: red")
         change_avatar_button = QPushButton("Change")
         # change_avatar_button.setFixedHeight(30)
@@ -402,7 +402,7 @@ class SettingsModal(QFrame):
         user_data_layout = QHBoxLayout()
         user_data_layout.setContentsMargins(20, 10, 20, 10)
 
-        avatar = RoundedAvatar(self.user.get("avatar"))
+        avatar = RoundedAvatar(self.user.get("avatar"), name=self.user.get("display_name", ""))
         username_email_layout = QVBoxLayout()
         username_email_layout.setSpacing(0)
 

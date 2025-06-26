@@ -74,7 +74,7 @@ class Sidebar(QtWidgets.QWidget):
         username_time_layout.addWidget(self.name)
         username_time_layout.addWidget(self.time)
 
-        self.avatar = RoundedAvatar(avatar_url=chat.user.avatar if chat else "", size=(60, 60))
+        self.avatar = RoundedAvatar(avatar_url=chat.user.avatar if chat else "", size=(60, 60), name=chat.user.display_name if chat else "")
         user_info_layout.addWidget(self.avatar)
         user_info_layout.addLayout(username_time_layout)
 
@@ -166,7 +166,7 @@ class Sidebar(QtWidgets.QWidget):
         QtCore.QTimer.singleShot(0, self.show_animation)
 
     def change_chat(self, chat: ChatType):
-        self.avatar.change_source(chat.user.avatar)
+        self.avatar.change_source(chat.user.avatar, new_name=chat.user.display_name)
         self.name.setText(chat.user.username)
         self.time.setText(format_timestamp(chat.updated_at))
 

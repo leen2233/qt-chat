@@ -38,7 +38,7 @@ class ChatListItem(QtWidgets.QWidget):
         self.main_layout.setContentsMargins(10, 0, 0, 0)
         self.main_layout.setSpacing(0)
 
-        self.avatar = RoundedAvatar(self.chat.user.avatar)
+        self.avatar = RoundedAvatar(self.chat.user.avatar, name=self.chat.user.display_name)
 
         # Add avatar container to layout
         self.main_layout.addWidget(self.avatar)

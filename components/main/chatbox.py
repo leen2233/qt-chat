@@ -348,7 +348,7 @@ class ChatBox(QtWidgets.QWidget):
             gv.send_data(data) # type: ignore
 
     def change_chat_user(self, chat: ChatType):
-        self.avatar.change_source(chat.user.avatar)
+        self.avatar.change_source(chat.user.avatar, new_name=chat.user.display_name)
         self.username.setText(chat.user.display_name if chat else "")
         if chat.user.is_online:
             self.last_seen.setText("online")
