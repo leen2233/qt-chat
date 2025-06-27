@@ -92,6 +92,7 @@ class Message(HighlightableWidget):
         self.message_type = message
         self.message = message.text
         self.time = message.time
+        self.status = message.status
         user = gv.get("user", {})
         self.is_mine = message.sender == user.get("id")
 
@@ -257,16 +258,17 @@ class Message(HighlightableWidget):
                 self.time_status_layout.setContentsMargins(0, 0, 10, 10)
             self.set_width = True
 
-    def setText(self, text: str):
+    def set_text(self, text: str):
         self.text.setPlainText(text)
         self.message_type.text = text
         QTimer.singleShot(50, self.adjust_sizes)
 
-    def mark_as_read(self):
-        icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
-        pixmap = icon.pixmap(20, 20)
-        if pixmap:
-            self.status.setPixmap(pixmap)
+    def set_status(self, status="read"):
+        if status == "read":
+            icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
+            pixmap = icon.pixmap(20, 20)
+            if pixmap:
+                self.status.setPixmap(pixmap)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

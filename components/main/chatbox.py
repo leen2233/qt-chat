@@ -32,9 +32,10 @@ class ChatBox(QtWidgets.QWidget):
         self.edit_opened = False
         self.message_to_edit = None
         self.has_more = False
+        self.current_messages: dict = {}
         self.setContentsMargins(0, 0, 0, 0)
 
-        gv.signal_manager.messages_changed.connect(self.load_messages)
+        gv.signal_manager.messages_changed.connect(self.on_messages_change)
         gv.signal_manager.selected_chat_changed.connect(self.selected_chat_changed)
 
         self.setStyleSheet("""
@@ -212,6 +213,36 @@ class ChatBox(QtWidgets.QWidget):
     #                 self.load_messages(chat.messages, False)
     #                 self.chat = deepcopy(chat)
 
+    def on_messages_change(self, messages: dict):
+        if not messages:
+            return
+
+        for message in messages.get('messages', []):
+            # message new added:
+            if message.id not in self.current_messages.keys():
+                print("[message new added]", message)
+                self.current_messages[message.id] = self.add_new_message(message)
+
+
+            # message exists but changed, text edited or status marked as read
+            else:
+                message_widget = self.current_messages[message.id]
+                if message_widget.message != message.text: # text edited
+                    message_widget.set_text(message.text)
+                elif message_widget.status != message.status: # status changed, message read
+                    message_widget.set_status(message.status)
+                    print("[message status changed]", message)
+
+        # check for deleted messages
+        existing_message_ids = [message.id for message in messages.get('messages', [])]
+        for message_id in self.current_messages.keys():
+            if message_id not in existing_message_ids:
+                print("[message deleted]", message_id)
+                item_to_delete = self.current_messages[message_id]
+                item_to_delete.deleteLater()
+                self.current_messages.pop(message_id)
+
+
     def selected_chat_changed(self, chat):
         if chat:
             self.change_chat_user(chat)
@@ -247,29 +278,12 @@ class ChatBox(QtWidgets.QWidget):
         else:
             is_from_same = False
 
-        self.add_message(message_item, previous=is_from_same)
+        message = self.add_message(message_item, previous=is_from_same)
         if not self.check_message_is_mine(message_item) and message_item.status != "read":
             data = {'action': 'read_message', "data": {"message_ids": [message_item.id], "chat_id": message_item.chat_id}}
             gv.send_data(data) # type: ignore
 
-    def delete_message(self, message_id: str):
-        for i in reversed(range(self.messages_container.count())):
-            item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id == message_id:  # type: ignore
-                item.widget().deleteLater()
-                self.messages_container.removeItem(item)
-
-    def edit_message(self, data: dict):
-        for i in reversed(range(self.messages_container.count())):
-            item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.id == data.get("message_id"): # type: ignore
-                item.widget().setText(data.get("text")) # type: ignore
-
-    def read_message(self, message_ids: List[str]):
-        for i in reversed(range(self.messages_container.count())):
-            item = self.messages_container.itemAt(i)
-            if item.widget() and item.widget().message_type.is_mine and item.widget().message_type.id in message_ids: # type: ignore
-                item.widget().mark_as_read() # type: ignore
+        return message
 
     def highlight_message(self, message_id: str):
         for index in range(self.messages_container.count()):
@@ -322,6 +336,8 @@ class ChatBox(QtWidgets.QWidget):
         return message.sender == user.get("id")
 
     def load_messages(self, data):
+        self.current_messages = {}
+
         messages = data.get("messages", [])
         self.has_more = data.get("has_more")
         while self.messages_container.count() > 1:
@@ -337,7 +353,7 @@ class ChatBox(QtWidgets.QWidget):
                 next = message.sender == messages[index - 1].sender
             if index < len(messages) - 1:
                 previous = message.sender == messages[index + 1].sender
-            self.add_message(message, previous, next)
+            self.current_messages[message.id] = self.add_message(message, previous, next)
 
             if not self.check_message_is_mine(message) and message.status != "read":
                 unread_messages.append(message.id)

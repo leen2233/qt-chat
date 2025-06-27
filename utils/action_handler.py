@@ -7,7 +7,7 @@ class ActionHandler:
     def __init__(self, data, window) -> None:
         self.window = window
         self.data = data
-        # print("\n[RECV]", self.data, end="\n")
+        print("\n[RECV]", self.data, end="\n")
 
     def handle(self):
         if hasattr(self, self.data.get("action")):
