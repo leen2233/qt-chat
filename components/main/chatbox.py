@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List
+from typing import List, Optional
 
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
@@ -217,11 +217,29 @@ class ChatBox(QtWidgets.QWidget):
         if not messages:
             return
 
+        self.has_more = messages.get("has_more", False)
         for message in messages.get('messages', []):
             # message new added:
             if message.id not in self.current_messages.keys():
-                print("[message new added]", message)
-                self.current_messages[message.id] = self.add_new_message(message)
+                # first check if message is new or older:
+                if self.messages_container.count() == 1 or self.messages_container.itemAt(self.messages_container.count() - 1).widget().message_type.time < message.time:
+                    # new message
+                    self.current_messages[message.id] = self.add_new_message(message)
+                elif self.messages_container.itemAt(1).widget().message_type.time > message.time:
+                    # older message than first message
+                    self.current_messages[message.id] = self.add_new_message(message, index=1)
+                else:
+                    # finally try to find by comparing messages by one
+                    found_place = False
+                    for i in range(1, self.messages_container.count()):
+                        item = self.messages_container.itemAt(i).widget()
+                        next_item = self.messages_container.itemAt(i+1).widget() if i != self.messages_container.count() - 1 else None
+                        if message.time > item.message_type.time and (next_item is None or message.time < next_item.message_type.time):
+                            # reach to last message or found place where current item is older from message_to_add and next item is newer thab message_to_add
+                            found_place = i + 1
+                            break
+                    if found_place:
+                        self.current_messages[message.id] = self.add_new_message(message, index=found_place)
 
 
             # message exists but changed, text edited or status marked as read
@@ -231,13 +249,11 @@ class ChatBox(QtWidgets.QWidget):
                     message_widget.set_text(message.text)
                 elif message_widget.status != message.status: # status changed, message read
                     message_widget.set_status(message.status)
-                    print("[message status changed]", message)
 
         # check for deleted messages
         existing_message_ids = [message.id for message in messages.get('messages', [])]
         for message_id in self.current_messages.keys():
             if message_id not in existing_message_ids:
-                print("[message deleted]", message_id)
                 item_to_delete = self.current_messages[message_id]
                 item_to_delete.deleteLater()
                 self.current_messages.pop(message_id)
@@ -260,25 +276,28 @@ class ChatBox(QtWidgets.QWidget):
         new_height = int(min(max(doc_height + 10, 50), 150))  # Adjust between min and max
         self.chat_input.setFixedHeight(new_height)
 
-    def add_message(self, message_item: MessageType, previous=None, next=None):
+    def add_message(self, message_item: MessageType, previous=None, next=None, index=None):
         message = Message(message=message_item, previous=previous, next=next)
         message.reply_clicked.connect(self.open_reply)
         message.edit_requested.connect(self.open_edit)
         message.message_highlight.connect(self.highlight_message)
-        self.messages_container.addWidget(message)
+        if index:
+            self.messages_container.insertWidget(index, message)
+        else:
+            self.messages_container.addWidget(message)
         QTimer.singleShot(10, self.scroll_to_bottom)
 
         return message
 
-    def add_new_message(self, message_item: MessageType):
-        if self.messages_container.count() > 0:
+    def add_new_message(self, message_item: MessageType, index: Optional[int] = None):
+        if self.messages_container.count() > 1:
             last_item = self.messages_container.itemAt(self.messages_container.count() - 1).widget()
             is_from_same = last_item.message_type.sender == message_item.sender # type: ignore
             last_item.update_previous_next(next=is_from_same) # type: ignore
         else:
             is_from_same = False
 
-        message = self.add_message(message_item, previous=is_from_same)
+        message = self.add_message(message_item, previous=is_from_same, index=index)
         if not self.check_message_is_mine(message_item) and message_item.status != "read":
             data = {'action': 'read_message', "data": {"message_ids": [message_item.id], "chat_id": message_item.chat_id}}
             gv.send_data(data) # type: ignore
@@ -445,6 +464,7 @@ class ChatBox(QtWidgets.QWidget):
 
     def on_scroll(self, value):
         if value == self.scroll_area.verticalScrollBar().minimum():
+            print(self.has_more)
             if self.has_more:
                 # load more messages:
                 first_message = self.messages_container.itemAt(1).widget() # because 1st is QSpacer
