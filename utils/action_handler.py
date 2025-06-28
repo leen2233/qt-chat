@@ -77,11 +77,28 @@ class ActionHandler:
     def new_message(self):
         message = self.data.get("data", {}).get("message")
         chat_id = self.data.get("data", {}).get("message", {}).get("chat_id")
+        local_id = self.data.get("data", {}).get("local_id")
         if message.get("reply_to"):
             message["reply_to"] = MessageType(**message["reply_to"])
-        message = MessageType(**message)
+
+        if local_id:
+            waiting_messages = gv.get("waiting_messages", [])
+            for m in waiting_messages:
+                if m.id == local_id:
+                    waiting_messages.remove(m)
+            gv.set("waiting_messages", waiting_messages)
+
         messages = gv.get(f"chat_messages_{chat_id}", [])
-        messages.get("messages", []).append(message)
+
+        if local_id:
+            for m in messages.get("messages", []):
+                if m.id == local_id:
+                    m.id = message.get("id")
+                    m.status = message.get("status")
+                    m.local_id = local_id
+        else:
+            message = MessageType(**message)
+            messages.get("messages", []).append(message)
         gv.set(f"chat_messages_{chat_id}", messages)
 
     def delete_message(self):

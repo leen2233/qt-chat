@@ -87,6 +87,7 @@ def save_data(data: dict):
 
         data_to_save["chats"] = [asdict(item) for item in data_to_save.get("chats", [])]
         data_to_save["selected_chat"] = asdict(data_to_save["selected_chat"]) if data_to_save.get("selected_chat") else {}
+        data_to_save["waiting_messages"] = [asdict(item) for item in data_to_save.get("waiting_messages", [])]
         for key, value in data_to_save.items():
             if key.startswith("chat_messages_"):
                 data_to_save[key]["messages"] = [asdict(item) for item in value.get('messages', [])]
@@ -117,6 +118,8 @@ def load_data():
     if loaded_data.get("selected_chat"):
         user_data = loaded_data["selected_chat"].pop("user", {})
         loaded_data["selected_chat"] = ChatType(**loaded_data["selected_chat"], user=UserType(**user_data))
+    if loaded_data.get("waiting_messages"):
+        loaded_data["waiting_messages"] = [MessageType(**item) for item in loaded_data.get("waiting_messages", [])]
     for key, value in loaded_data.items():
         if key.startswith("chat_messages_"):
             loaded_data[key]["messages"] = [MessageType(**item) for item in value.get('messages', [])]

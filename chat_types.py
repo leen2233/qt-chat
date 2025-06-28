@@ -14,6 +14,8 @@ class MessageType:
 
     reply_to: Optional["MessageType"] = None
 
+    local_id: Optional[str] = None
+
 
 @dataclass
 class StatType:

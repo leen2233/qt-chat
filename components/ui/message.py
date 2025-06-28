@@ -173,7 +173,7 @@ class Message(HighlightableWidget):
         self.time_status_layout.addWidget(self.time_label)
 
         if self.is_mine:
-            self.status = QtWidgets.QLabel()
+            self._status = QtWidgets.QLabel()
             pixmap = None
             if self.message_type.status == "sending":
                 icon = qta.icon("mdi.clock-outline", color=Colors.TEXT_PRIMARY)
@@ -185,13 +185,13 @@ class Message(HighlightableWidget):
                 icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
                 pixmap = icon.pixmap(20, 20)
             if pixmap:
-                self.status.setPixmap(pixmap)
-                self.status.setFixedWidth(20)
-                self.status.setStyleSheet("padding: 0px; margin: 0px;")
+                self._status.setPixmap(pixmap)
+                self._status.setFixedWidth(20)
+                self._status.setStyleSheet("padding: 0px; margin: 0px;")
                 # self.status.setAlignment(Qt.AlignRight)
-                self.status.setContentsMargins(0, 0, 0, 0)
+                self._status.setContentsMargins(0, 0, 0, 0)
 
-                self.time_status_layout.addWidget(self.status)
+                self.time_status_layout.addWidget(self._status)
 
         self.text_and_time_layout.addWidget(self.text)
         self.text_and_time_layout.addLayout(self.time_status_layout)
@@ -220,9 +220,8 @@ class Message(HighlightableWidget):
             self.time_label.setParent(self.text)
             self.time_label.setFixedWidth(self.time_label.width())
             if self.is_mine:
-                self.time_status_layout.removeWidget(self.status)
-                self.status.setParent(self.text)
-                # self.status.setFixedWidth(self.status.width() + 20)
+                self.time_status_layout.removeWidget(self._status)
+                self._status.setParent(self.text)
 
             cursor = self.text.textCursor()
             cursor.movePosition(cursor.MoveOperation.End)
@@ -239,8 +238,8 @@ class Message(HighlightableWidget):
                 self.time_label.move(x, y)
                 self.time_label.show()
                 if self.is_mine:
-                    self.status.move(x + time_label_width, y)
-                    self.status.show()
+                    self._status.move(x + time_label_width, y)
+                    self._status.show()
 
                 self.message_box.setMinimumHeight(doc_height + 10)
             else:
@@ -261,14 +260,21 @@ class Message(HighlightableWidget):
     def set_text(self, text: str):
         self.text.setPlainText(text)
         self.message_type.text = text
+        self.message = text
         QTimer.singleShot(50, self.adjust_sizes)
 
     def set_status(self, status="read"):
+        icon = None
         if status == "read":
             icon = qta.icon("mdi.check-all", color=Colors.TEXT_PRIMARY)
+        elif status == "sent":
+            icon = qta.icon("mdi.check", color=Colors.TEXT_PRIMARY)
+
+        if icon:
             pixmap = icon.pixmap(20, 20)
-            if pixmap:
-                self.status.setPixmap(pixmap)
+            self._status.setPixmap(pixmap)
+        self.message_type.status = status
+        self.status = status
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

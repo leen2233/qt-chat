@@ -1,12 +1,12 @@
 from copy import deepcopy
 from typing import List, Optional
-
+import random
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QHBoxLayout
-
+from datetime import datetime
 from chat_types import ChatType, MessageType
 from components.ui.message import Message
 from components.ui.rounded_avatar import RoundedAvatar
@@ -221,8 +221,20 @@ class ChatBox(QtWidgets.QWidget):
         for message in messages.get('messages', []):
             # message new added:
             if message.id not in self.current_messages.keys():
+                print("new message found", message, "\n\n")
+
+                if message.local_id and message.local_id in self.current_messages.keys():
+                    # message already exists at chatbox, but with different id.
+                    message_widget = self.current_messages[message.local_id]
+                    if message_widget.message != message.text: # text edited
+                        message_widget.set_text(message.text)
+                    elif message_widget.status != message.status: # status changed, message read
+                        message_widget.set_status(message.status)
+                    self.current_messages[message.id] = message_widget
+                    self.current_messages.pop(message.local_id)
+
                 # first check if message is new or older:
-                if self.messages_container.count() == 1 or self.messages_container.itemAt(self.messages_container.count() - 1).widget().message_type.time < message.time:
+                elif self.messages_container.count() == 1 or self.messages_container.itemAt(self.messages_container.count() - 1).widget().message_type.time < message.time:
                     # new message
                     self.current_messages[message.id] = self.add_new_message(message)
                 elif self.messages_container.itemAt(1).widget().message_type.time > message.time:
@@ -241,7 +253,6 @@ class ChatBox(QtWidgets.QWidget):
                     if found_place:
                         self.current_messages[message.id] = self.add_new_message(message, index=found_place)
 
-
             # message exists but changed, text edited or status marked as read
             else:
                 message_widget = self.current_messages[message.id]
@@ -252,11 +263,14 @@ class ChatBox(QtWidgets.QWidget):
 
         # check for deleted messages
         existing_message_ids = [message.id for message in messages.get('messages', [])]
+        keys_to_pop = []
         for message_id in self.current_messages.keys():
             if message_id not in existing_message_ids:
                 item_to_delete = self.current_messages[message_id]
                 item_to_delete.deleteLater()
-                self.current_messages.pop(message_id)
+                keys_to_pop.append(message_id)
+        for key in keys_to_pop:
+            self.current_messages.pop(key)
 
 
     def selected_chat_changed(self, chat):
@@ -323,6 +337,7 @@ class ChatBox(QtWidgets.QWidget):
     def send_my_message(self):
         text = self.chat_input.toPlainText()
         if text.strip():
+            data = None
             if self.message_to_edit:
                 data = {
                     "action": "edit_message",
@@ -348,7 +363,29 @@ class ChatBox(QtWidgets.QWidget):
                 else:
                     print("No chat selected")
 
-            gv.send_data(data) # type: ignore
+            if gv.get("is_authenticated"):
+                if data:
+                    gv.send_data(data)
+            else:
+                local_id = str(random.randint(999999999999, 10000000000000))
+                message = MessageType(
+                    id=local_id,
+                    local_id=local_id,
+                    text=text,
+                    sender=gv.get("user", {}).get("id"),
+                    time=datetime.now().timestamp(),
+                    status="sending",
+                    chat_id=gv.get("selected_chat", "").id,
+                    reply_to=self.reply_to_message
+                )
+
+                waiting_messages = gv.get("waiting_messages", [])
+                waiting_messages.append(message)
+                gv.set("waiting_messages", waiting_messages)
+
+                messages = gv.get(f"chat_messages_{gv.get('selected_chat').id}", {})
+                messages.get("messages", []).append(message)
+                gv.set(f"chat_messages_{gv.get('selected_chat').id}", messages)
 
     def check_message_is_mine(self, message: MessageType):
         user = gv.get("user", {})

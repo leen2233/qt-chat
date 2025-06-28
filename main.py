@@ -189,6 +189,7 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list.handle_connected()
 
     def on_disconnect(self):
+        gv.set("is_authenticated", False)
         self.chat_list.handle_disconnected()
 
     def on_message(self, data):
@@ -198,6 +199,21 @@ class ChatApp(QtWidgets.QMainWindow):
         self.user = data.get("data", {}).get('user', {})
         gv.set("user", self.user)
         gv.set("is_authenticated", True)
+
+        # send waiting messages
+        for message in gv.get("waiting_messages", []):
+            data = {
+                "action": "new_message",
+                "data": {
+                    "text": message.text,
+                    "chat_id": message.chat_id,
+                    "reply_to": message.reply_to.id if message.reply_to else None,
+                    "timestamp": message.time,
+                    "local_id": message.id
+                }
+            }
+
+            gv.send_data(data)
 
     def closeEvent(self, event) -> None:
         self.conn.stop()
