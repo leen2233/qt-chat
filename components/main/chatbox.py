@@ -1,12 +1,14 @@
-from copy import deepcopy
-from typing import List, Optional
 import random
+from copy import deepcopy
+from datetime import datetime
+from typing import Optional
+
 import qtawesome as qta
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QHBoxLayout
-from datetime import datetime
+
 from chat_types import ChatType, MessageType
 from components.ui.message import Message
 from components.ui.rounded_avatar import RoundedAvatar
@@ -221,7 +223,6 @@ class ChatBox(QtWidgets.QWidget):
         for message in messages.get('messages', []):
             # message new added:
             if message.id not in self.current_messages.keys():
-                print("new message found", message, "\n\n")
 
                 if message.local_id and message.local_id in self.current_messages.keys():
                     # message already exists at chatbox, but with different id.
@@ -388,8 +389,7 @@ class ChatBox(QtWidgets.QWidget):
                 gv.set(f"chat_messages_{gv.get('selected_chat').id}", messages)
 
     def check_message_is_mine(self, message: MessageType):
-        user = gv.get("user", {})
-        return message.sender == user.get("id")
+        return message.is_mine
 
     def load_messages(self, data):
         self.current_messages = {}
@@ -490,7 +490,6 @@ class ChatBox(QtWidgets.QWidget):
         self.send_button.setIconSize(QSize(30, 30))
 
         if not self.edit_opened:
-            print("starting animation")
             self.animation = QtCore.QPropertyAnimation(self.edit_widget, b"maximumHeight") # type: ignore
             self.animation.setDuration(200)  # Animation duration in milliseconds
             self.animation.setStartValue(0)
@@ -501,7 +500,6 @@ class ChatBox(QtWidgets.QWidget):
 
     def on_scroll(self, value):
         if value == self.scroll_area.verticalScrollBar().minimum():
-            print(self.has_more)
             if self.has_more:
                 # load more messages:
                 first_message = self.messages_container.itemAt(1).widget() # because 1st is QSpacer

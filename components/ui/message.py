@@ -93,8 +93,7 @@ class Message(HighlightableWidget):
         self.message = message.text
         self.time = message.time
         self.status = message.status
-        user = gv.get("user", {})
-        self.is_mine = message.sender == user.get("id")
+        self.is_mine = message.is_mine # message.sender == user.get("id")
 
         self.previous = previous
         self.next = next

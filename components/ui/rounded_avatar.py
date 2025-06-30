@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
+from utils.media import check_media_if_exists, get_absolute_path
+
 
 class RoundedAvatar(QtWidgets.QWidget):
     def __init__(self, avatar_url, size: Tuple[int, int] = (40, 40), name: str = "", parent=None):
@@ -14,19 +16,32 @@ class RoundedAvatar(QtWidgets.QWidget):
         self.given_size = size
         self.nm = QNetworkAccessManager()
         self.name = name
+        self.url = avatar_url
 
         self.avatar = QtWidgets.QLabel(self)
         self.avatar.setFixedSize(size[0], size[1])
         self.avatar.setScaledContents(True)  # Important for proper scaling
         self.avatar.setStyleSheet("background-color: transparent;")
 
-        self.nm.finished.connect(self.on_image_loaded)
-        url = QUrl(avatar_url)
-        request = QNetworkRequest(url)
-        self.nm.get(request)
+        if avatar_url:
+            file_path = check_media_if_exists(avatar_url.split("/")[-1])
+            print(file_path)
+            if file_path:
+                pixmap = QPixmap(file_path)
+                size = self.avatar.width()
+                rounded = self.create_rounded_pixmap(pixmap, size)
+                if self.avatar:
+                    self.avatar.setPixmap(rounded)
+            else:
+                self.nm.finished.connect(self.on_image_loaded)
+                url = QUrl(avatar_url)
+                request = QNetworkRequest(url)
+                self.nm.get(request)
+                self.set_default_avatar()
 
-        # Default placeholder for avatar
-        self.set_default_avatar()
+        else:
+            # Default placeholder for avatar
+            self.set_default_avatar()
 
     def set_default_avatar(self):
         initials = self.get_initials(self.name)
@@ -95,9 +110,14 @@ class RoundedAvatar(QtWidgets.QWidget):
             reply.deleteLater()
             return
 
+        data = reply.readAll()
         # Load the image data
         pixmap = QPixmap()
-        pixmap.loadFromData(reply.readAll())
+        pixmap.loadFromData(data)
+
+        file_path = get_absolute_path(self.url.split("/")[-1])
+        with open(file_path, "wb") as f:
+            f.write(data)
 
         if pixmap.isNull():
             print("Failed to load avatar image")
@@ -117,9 +137,19 @@ class RoundedAvatar(QtWidgets.QWidget):
         self.name = new_name
         self.set_default_avatar()
         if new_url:
-            url = QUrl(new_url)
-            request = QNetworkRequest(url)
-            self.nm.get(request)
+            file_path = check_media_if_exists(new_url.split("/")[-1])
+            self.url = new_url
+            if file_path:
+                pixmap = QPixmap(file_path)
+                size = self.avatar.width()
+                rounded = self.create_rounded_pixmap(pixmap, size)
+                if self.avatar:
+                    self.avatar.setPixmap(rounded)
+            else:
+                url = QUrl(new_url)
+                request = QNetworkRequest(url)
+                self.nm.get(request)
+
         elif new_path:
             pixmap = QPixmap(new_path)
             size = self.avatar.width()

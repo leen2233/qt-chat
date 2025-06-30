@@ -1,4 +1,5 @@
 from typing import Dict
+
 from chat_types import ChatType, MessageType, UserType
 from utils import gv
 
@@ -42,9 +43,9 @@ class ActionHandler:
         messages = []
         for message_data in results:
             if message_data.get("reply_to"):
-                message_data["reply_to"] = MessageType(**message_data["reply_to"])
+                message_data["reply_to"] = MessageType(**message_data["reply_to"], is_mine=message_data["reply_to"]["sender"] == gv.get("user", {}).get("id"))
 
-            messages.append(MessageType(**message_data))
+            messages.append(MessageType(**message_data, is_mine=message_data["sender"] == gv.get("user", {}).get("id")))
 
         existing_messages = gv.get(f"chat_messages_{chat_id}", {}).get("messages")
         if existing_messages:
@@ -79,7 +80,7 @@ class ActionHandler:
         chat_id = self.data.get("data", {}).get("message", {}).get("chat_id")
         local_id = self.data.get("data", {}).get("local_id")
         if message.get("reply_to"):
-            message["reply_to"] = MessageType(**message["reply_to"])
+            message["reply_to"] = MessageType(**message["reply_to"], is_mine=message["reply_to"]["sender"] == gv.get("user", {}).get("id"))
 
         if local_id:
             waiting_messages = gv.get("waiting_messages", [])
@@ -97,7 +98,7 @@ class ActionHandler:
                     m.status = message.get("status")
                     m.local_id = local_id
         else:
-            message = MessageType(**message)
+            message = MessageType(**message, is_mine=message["reply_to"]["sender"] == gv.get("user", {}).get("id"))
             messages.get("messages", []).append(message)
         gv.set(f"chat_messages_{chat_id}", messages)
 
