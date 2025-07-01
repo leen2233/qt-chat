@@ -1,5 +1,6 @@
 import asyncio
 import json
+import traceback
 from threading import Thread
 from typing import Callable, Optional
 
@@ -54,6 +55,7 @@ class Conn:
                 async for message in self.websocket:
                     self.on_message(message)
         except Exception as e:
+            print(traceback.format_exc())
             print("Error in listen:", e)
 
     def on_message(self, message):

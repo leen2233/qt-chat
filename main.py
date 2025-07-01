@@ -150,6 +150,7 @@ class ChatApp(QtWidgets.QMainWindow):
     def logout(self):
         self.settings.setValue("refresh_token", None)
         self.settings.setValue("access_token", None)
+        gv.clear_data()
         self.show_login_window.emit()
         self.destroy()
 

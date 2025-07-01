@@ -122,7 +122,16 @@ def load_data():
         loaded_data["waiting_messages"] = [MessageType(**item) for item in loaded_data.get("waiting_messages", [])]
     for key, value in loaded_data.items():
         if key.startswith("chat_messages_"):
-            loaded_data[key]["messages"] = [MessageType(**item) for item in value.get('messages', [])]
+            messages = []
+            for item in value.get('messages', []):
+                reply_to = None
+                if item.get("reply_to"):
+                    reply_to = MessageType(**item.get("reply_to"))
+                item.pop("reply_to")
+                message = MessageType(**item, reply_to=reply_to)
+                messages.append(message)
+
+            loaded_data[key]["messages"] = messages
 
     for key, value in loaded_data.items():
         if value:
@@ -141,3 +150,9 @@ def load_data():
 def set_instance(instance_number):
     global instance
     instance = instance_number
+
+
+def clear_data():
+    global data
+    data = []
+    os.remove(f"data{instance}.json")

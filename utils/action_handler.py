@@ -83,7 +83,7 @@ class ActionHandler:
             message["reply_to"] = MessageType(**message["reply_to"], is_mine=message["reply_to"]["sender"] == gv.get("user", {}).get("id"))
 
         if local_id:
-            waiting_messages = gv.get("waiting_messages", [])
+            waiting_messages: list = gv.get("waiting_messages", [])
             for m in waiting_messages:
                 if m.id == local_id:
                     waiting_messages.remove(m)
@@ -98,7 +98,7 @@ class ActionHandler:
                     m.status = message.get("status")
                     m.local_id = local_id
         else:
-            message = MessageType(**message, is_mine=message["reply_to"]["sender"] == gv.get("user", {}).get("id"))
+            message = MessageType(**message, is_mine=message["sender"] == gv.get("user", {}).get("id"))
             messages.get("messages", []).append(message)
         gv.set(f"chat_messages_{chat_id}", messages)
 

@@ -104,6 +104,7 @@ class Login(QtWidgets.QMainWindow):
         self.login_username_error.setVisible(False)
 
         self.password_input = QtWidgets.QLineEdit()
+        self.password_input.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.password_input.setPlaceholderText("Password")
         self.password_input.setStyleSheet(
             "color: white; background-color: #262626; border: 1px solid grey; border-radius: 10px"
@@ -166,6 +167,7 @@ class Login(QtWidgets.QMainWindow):
         self.signup_email_error.setVisible(False)
 
         self.signup_password_input = QtWidgets.QLineEdit()
+        self.signup_password_input.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.signup_password_input.setPlaceholderText("Password")
         self.signup_password_input.setStyleSheet(
             "color: white; background-color: #262626; border: 1px solid grey; border-radius: 10px"
