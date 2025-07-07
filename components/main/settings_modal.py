@@ -371,7 +371,6 @@ class EditProfile(QFrame):
             selected_files = file_dialog.selectedFiles()
             if selected_files:
                 new_avatar_path = selected_files[0]
-                print("selected avatar", new_avatar_path)
                 self.avatar.change_source(new_path=new_avatar_path)
                 self.avatar_path = new_avatar_path
 

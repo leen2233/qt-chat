@@ -80,6 +80,7 @@ class Login(QtWidgets.QMainWindow):
         self.slide_animation.setDuration(300)
         self.slide_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
+        self.username_input.setFocus()
         self.conn.start()
 
     def create_login_form(self):
@@ -115,6 +116,9 @@ class Login(QtWidgets.QMainWindow):
         self.login_password_error = QtWidgets.QLabel()
         self.login_password_error.setStyleSheet("color: red; font-size: 12px;")
         self.login_password_error.setVisible(False)
+
+        self.username_input.returnPressed.connect(lambda: self.password_input.setFocus(Qt.FocusReason.MouseFocusReason))
+        self.password_input.returnPressed.connect(self.on_login_submit)
 
         login_button = QtWidgets.QPushButton("Log In")
         login_button.setStyleSheet(
@@ -187,6 +191,10 @@ class Login(QtWidgets.QMainWindow):
         signup_button.setFixedWidth(200)
         signup_button.clicked.connect(self.on_signup_submit)
 
+        self.signup_username_input.returnPressed.connect(lambda: self.signup_email_input.setFocus(Qt.FocusReason.MouseFocusReason))
+        self.signup_email_input.returnPressed.connect(lambda: self.signup_password_input.setFocus(Qt.FocusReason.MouseFocusReason))
+        self.signup_password_input.returnPressed.connect(self.on_signup_submit)
+
         layout.addWidget(self.signup_error_message)
         layout.addWidget(self.signup_username_input)
         layout.addWidget(self.signup_username_error)
@@ -207,9 +215,11 @@ class Login(QtWidgets.QMainWindow):
         if index == 0:  # Login tab
             self.login_btn.setStyleSheet(self.active_style)
             self.signin_btn.setStyleSheet(self.inactive_style)
+            self.username_input.setFocus()
         else:  # Sign up tab
             self.login_btn.setStyleSheet(self.inactive_style)
             self.signin_btn.setStyleSheet(self.active_style)
+            self.signup_username_input.setFocus()
 
         current_geometry = self.stacked_widget.geometry()
 

@@ -6,7 +6,6 @@ from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QSettings, Qt, Signal
 
 import env
-from chat_types import MessageType
 from components.main.chat_list import ChatList
 from components.main.chatbox import ChatBox
 from components.main.login import Login
@@ -35,9 +34,13 @@ class ChatApp(QtWidgets.QMainWindow):
         self.conn.disconnected_callback = self.on_disconnect
         self.conn.on_message_callback = self.on_message
 
+        gv.signal_manager.selected_chat_changed.connect(self.selected_chat_changed)
+        gv.signal_manager.sidebar_opened_changed.connect(self.toggle_sidebar)
+
         self.user: Optional[dict] = None
         self.connected = False
         self.chats = []
+        self.chatboxes = {}
 
         self.sidebar_opened = False
 
@@ -67,16 +70,18 @@ class ChatApp(QtWidgets.QMainWindow):
         self.chat_list = ChatList()
         self.chat_list.settings_clicked.connect(self.open_settings)
 
-        # Main chat area
-        self.chat_area = ChatBox()
-        self.chat_area.sidebar_toggled_signal.connect(self.toggle_sidebar)
+        self.chatbox_area = QtWidgets.QStackedWidget()
+
+        # # Main chat area
+        # self.chat_area = ChatBox()
+        # self.chat_area.sidebar_toggled_signal.connect(self.toggle_sidebar)
 
         self.splitter.addWidget(self.chat_list)
-        self.splitter.addWidget(self.chat_area)
+        self.splitter.addWidget(self.chatbox_area)
         self.splitter.setSizes([250, 750])
         self.main_layout.addWidget(self.splitter)
 
-        self.chat_area.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
+        # self.chat_area.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
         # Window settings
         self.resize(1000, 600)
 
@@ -121,12 +126,23 @@ class ChatApp(QtWidgets.QMainWindow):
                 gv.set("selected_chat", chat)
                 self.chat_list.set_active_item_by_id(chat.id)
 
+    def selected_chat_changed(self, chat):
+        if not self.chatboxes.get(chat.id):
+            chatbox = ChatBox(chat)
+            self.chatboxes[chat.id] = chatbox
+            self.chatbox_area.addWidget(chatbox)
+            self.chatbox_area.setCurrentWidget(chatbox)
+        else:
+            self.chatbox_area.setCurrentWidget(self.chatboxes[chat.id])
+
 
     def sidebar_closed(self, state):
+        gv.set("sidebar_opened", False)
         self.sidebar_opened = False
-        self.chat_area.sidebar_toggle()
+        # self.chat_area.sidebar_toggle()
 
     def toggle_sidebar(self, state: bool):
+        print("sidebar toggled", state)
         if state is True:
             self.sidebar = Sidebar()
             self.sidebar.sidebar_closed.connect(self.sidebar_closed)

@@ -25,7 +25,6 @@ class RoundedAvatar(QtWidgets.QWidget):
 
         if avatar_url:
             file_path = check_media_if_exists(avatar_url.split("/")[-1])
-            print(file_path)
             if file_path:
                 pixmap = QPixmap(file_path)
                 size = self.avatar.width()

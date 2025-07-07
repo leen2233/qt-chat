@@ -20,15 +20,15 @@ from utils.time import format_timestamp
 
 
 class ChatBox(QtWidgets.QWidget):
-    sidebar_toggled_signal = Signal(bool)
     message_edited = Signal(dict)
     message_deleted = Signal(str)
     mark_as_read = Signal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, chat: ChatType, parent=None):
         super().__init__(parent)
-        self.sidebar_toggled = False
-        self.chat = None
+        self.sidebar_toggled = bool(gv.get("sidebar_opened"))
+        print(self.sidebar_toggled)
+        self.chat = deepcopy(chat)
         self.reply_opened = False
         self.reply_to_message = None
         self.edit_opened = False
@@ -38,7 +38,7 @@ class ChatBox(QtWidgets.QWidget):
         self.setContentsMargins(0, 0, 0, 0)
 
         gv.signal_manager.messages_changed.connect(self.on_messages_change)
-        gv.signal_manager.selected_chat_changed.connect(self.selected_chat_changed)
+        gv.signal_manager.sidebar_opened_changed.connect(self.on_sidebar_change)
 
         self.setStyleSheet("""
             QWidget { background-color: #262624; color: #ffffff; }
@@ -53,14 +53,21 @@ class ChatBox(QtWidgets.QWidget):
         self.header_layout.setAlignment(Qt.AlignmentFlag.AlignJustify)
         self.header_layout.setContentsMargins(10, 0, 0, 0)
 
-        self.avatar = RoundedAvatar("")
+        self.avatar = RoundedAvatar(self.chat.user.avatar, name=chat.user.display_name)
 
-        self.username = QtWidgets.QLabel("John Doe")
+        self.username = QtWidgets.QLabel(self.chat.user.display_name)
         self.username.setStyleSheet("font-size: 16px")
         self.username.setContentsMargins(0, 0, 0, 0)
         self.last_seen = QtWidgets.QLabel("Last seen: 10:30 AM")
         self.last_seen.setStyleSheet("font-size: 14px; color: grey")
         self.last_seen.setContentsMargins(0, 0, 0, 0)
+
+        if self.chat.user.is_online:
+            self.last_seen.setText("online")
+            self.last_seen.setStyleSheet(f"color: {Colors.PRIMARY}; font-size: 14px")
+        else:
+            self.last_seen.setText(format_timestamp(chat.user.last_seen))
+            self.last_seen.setStyleSheet("color: grey; font-size: 14px")
 
         self.username_last_seen_layout = QtWidgets.QVBoxLayout()
         self.username_last_seen_layout.setSpacing(0)
@@ -79,7 +86,7 @@ class ChatBox(QtWidgets.QWidget):
         self.call_button.setStyleSheet("background-color: transparent; border: none;")
         self.call_button.setIconSize(QSize(20, 20))
 
-        self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color="white"), "")
+        self.sidebar_button = QtWidgets.QPushButton(qta.icon("msc.layout-sidebar-right-off", color=Colors.PRIMARY if self.sidebar_toggled else "white" ), "")
         self.sidebar_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.sidebar_button.setStyleSheet("background-color: transparent; border: none;")
         self.sidebar_button.setIconSize(QSize(25, 25))
@@ -207,16 +214,27 @@ class ChatBox(QtWidgets.QWidget):
         self.main_layout.addWidget(self.scroll_area)
         self.main_layout.addLayout(self.input_part)
 
-    # def chats_changed(self, chats):
-    #     for chat in chats:
-    #         if self.chat:
-    #             if chat.id == self.chat.id:
-    #                 # self.change_chat_user(chat)
-    #                 self.load_messages(chat.messages, False)
-    #                 self.chat = deepcopy(chat)
+        if not gv.get(f"chat_messages_{chat.id}"):
+            data = {"action": "get_messages", "data": {"chat_id": self.chat.id}}
+            gv.send_data(data)
+        else:
+            self.load_messages(gv.get(f"chat_messages_{chat.id}", []))
+            QTimer.singleShot(100, self.scroll_to_bottom)
 
-    def on_messages_change(self, messages: dict):
+    def on_sidebar_change(self, state):
+        print("changedd", state)
+        self.sidebar_toggled = state
+        self.sidebar_button.setIcon(
+            qta.icon("msc.layout-sidebar-right-off", color=Colors.PRIMARY)
+            if self.sidebar_toggled
+            else qta.icon("msc.layout-sidebar-right-off", color="white")
+        )
+
+    def on_messages_change(self, messages: dict, chat_id: str):
         if not messages:
+            return
+
+        if chat_id != self.chat.id:
             return
 
         self.has_more = messages.get("has_more", False)
@@ -272,19 +290,6 @@ class ChatBox(QtWidgets.QWidget):
                 keys_to_pop.append(message_id)
         for key in keys_to_pop:
             self.current_messages.pop(key)
-
-
-    def selected_chat_changed(self, chat):
-        if chat:
-            self.change_chat_user(chat)
-            self.chat = deepcopy(chat)
-
-            if not gv.get(f"chat_messages_{chat.id}"):
-                data = {"action": "get_messages", "data": {"chat_id": gv.get("selected_chat", "").id}}
-                gv.send_data(data)
-            else:
-                self.load_messages(gv.get(f"chat_messages_{chat.id}", []))
-                QTimer.singleShot(100, self.scroll_to_bottom)
 
     def adjust_input_height(self):
         doc_height = self.chat_input.document().size().height()
@@ -431,14 +436,16 @@ class ChatBox(QtWidgets.QWidget):
         # self.chat = chat
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
+        self.chat = deepcopy(chat)
+        if not gv.get(f"chat_messages_{chat.id}"):
+            data = {"action": "get_messages", "data": {"chat_id": self.chat.id}}
+            gv.send_data(data)
+        else:
+            self.load_messages(gv.get(f"chat_messages_{chat.id}", []))
+            QTimer.singleShot(100, self.scroll_to_bottom)
+
     def sidebar_toggle(self):
-        self.sidebar_button.setIcon(
-            qta.icon("msc.layout-sidebar-right-off", color="white")
-            if self.sidebar_toggled
-            else qta.icon("msc.layout-sidebar-right-off", color=Colors.PRIMARY)
-        )
-        self.sidebar_toggled = not self.sidebar_toggled
-        self.sidebar_toggled_signal.emit(self.sidebar_toggled)
+        gv.set("sidebar_opened", not self.sidebar_toggled)
         self.chat_input.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def close_reply(self):

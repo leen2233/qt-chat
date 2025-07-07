@@ -19,7 +19,8 @@ DATA_BLACKLIST = ["is_authenticated"]
 class SignalManager(QObject):
     chats_changed = Signal(list)
     selected_chat_changed = Signal(ChatType)
-    messages_changed = Signal(dict)
+    messages_changed = Signal(dict, str)
+    sidebar_opened_changed = Signal(bool)
 
     _instance = None
 
@@ -47,8 +48,10 @@ def set(key, value):
     elif key == "selected_chat":
         signal_manager.selected_chat_changed.emit(value)
     elif key.startswith("chat_messages_"):
-        if data["selected_chat"].id and data["selected_chat"].id == key.split("chat_messages_")[1]:
-            signal_manager.messages_changed.emit(value)
+        chat_id = key.split("chat_messages_")[1]
+        signal_manager.messages_changed.emit(value, chat_id)
+    elif key == "sidebar_opened":
+        signal_manager.sidebar_opened_changed.emit(value)
     elif key == "is_authenticated" and value:
         if data_loaded and data.get("last_updated_time"):
             data_to_send = {'action': "get_updates", "data": {"last_time": data.get("last_updated_time")}}
@@ -141,10 +144,12 @@ def load_data():
     signal_manager.chats_changed.emit(data.get("chats", []))
     if data.get("selected_chat"):
         signal_manager.selected_chat_changed.emit(data.get("selected_chat"))
+    if data.get("sidebar_opened"):
+        signal_manager.sidebar_opened_changed.emit(data.get("sidebar_opened"))
 
     for key, value in loaded_data.items():
-        if key.startswith("chat_messages_") and data["selected_chat"].id and data["selected_chat"].id == key.split("chat_messages_")[1]:
-            signal_manager.messages_changed.emit(data[key])
+        if key.startswith("chat_messages_"):
+            signal_manager.messages_changed.emit(data[key], key.split("chat_messages_")[1])
 
 
 def set_instance(instance_number):
